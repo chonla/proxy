@@ -11,11 +11,41 @@ import (
 
 var target *string
 
+type transport struct {
+	http.RoundTripper
+}
+
+func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	resp, err = t.RoundTripper.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
+	body := ioutil.NopCloser(bytes.NewReader(b))
+	resp.Body = body
+	resp.ContentLength = int64(len(b))
+	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
+	return resp, nil
+}
+
 func main() {
 	target = flag.String("target", "http://stackoverflow.com", "target URL for reverse proxy")
 	flag.Parse()
 	http.HandleFunc("/", report)
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
+
+	// ...
+	// proxy := httputil.NewSingleHostReverseProxy(target)
+	// proxy.Transport = &transport{http.DefaultTransport}
+
 }
 
 func report(w http.ResponseWriter, r *http.Request) {
