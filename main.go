@@ -1,5 +1,7 @@
 package main
 
+// http://stackoverflow.com/questions/31535569/golang-how-to-read-response-body-of-reverseproxy
+
 import (
 	"flag"
 	"fmt"
