@@ -1,0 +1,15 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:pack.INReadUserDealWS_typedef.salt11">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <urn:ReadUserDealWS>
+         <urn:inbuf>
+            <!--Optional:-->
+            <urn:USER_CODE>LLCHAILUCK</urn:USER_CODE>
+            <!--Optional:-->
+            <urn:RD_DEAL_DETL__DEAL_NUMB>15046002</urn:RD_DEAL_DETL__DEAL_NUMB>
+            <!--Optional:-->
+            <urn:RD_DEAL_DETL__BLPD_CODE>02</urn:RD_DEAL_DETL__BLPD_CODE>
+         </urn:inbuf>
+      </urn:ReadUserDealWS>
+   </soapenv:Body>
+</soapenv:Envelope>

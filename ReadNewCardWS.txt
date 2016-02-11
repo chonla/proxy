@@ -1,0 +1,17 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:pack.INReadNewCardWS_typedef.salt11">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <urn:ReadNewCardWS>
+         <urn:inbuf>
+            <urn:USER_CODE>LLCHAILUCK</urn:USER_CODE>
+            <urn:RD_CARD__CARD_NUMB>8966051307484031399</urn:RD_CARD__CARD_NUMB>
+            <urn:SUBR_NUMB>66905512585</urn:SUBR_NUMB>
+            <urn:BLPD_CODE>02</urn:BLPD_CODE>
+            <urn:FUNC_ID>3</urn:FUNC_ID>
+            <urn:DMMY_ALLW_FLAG></urn:DMMY_ALLW_FLAG>
+            <urn:CARD_NUMB>8966181307418951954</urn:CARD_NUMB>
+            <urn:RD_CARD__LIVE_FLAG></urn:RD_CARD__LIVE_FLAG>
+         </urn:inbuf>
+      </urn:ReadNewCardWS>
+   </soapenv:Body>
+</soapenv:Envelope>

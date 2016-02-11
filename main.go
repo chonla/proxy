@@ -1,6 +1,7 @@
 package main
 
 // http://stackoverflow.com/questions/31535569/golang-how-to-read-response-body-of-reverseproxy
+// curl -verbose -X POST -d @ReadNewCardWS.txt http://athena13:9582/ReadNewCardWS
 
 import (
 	"bytes"
