@@ -13,28 +13,44 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"github.com/kr/pretty"
 )
 
 var endpoint_url *string
 var _ http.RoundTripper = &transport{}
+var data []Recoder
 
 type transport struct {
 	http.RoundTripper
 }
 
+type Recoder struct {
+	Request  *http.Request
+	Response *http.Response
+}
+
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// report(resp, r)
 	println("===========================================")
-	println("in RoundTrip")
+	println("Record Mode")
+	println("===========================================")
 
 	fmt.Printf("req=%# v\n", pretty.Formatter(req))
 	// fmt.Printf("req=%#v\n", req)
 	resp, err = t.RoundTripper.RoundTrip(req)
 
-	println("===========================================")
+	row := Recoder{
+		Request:  req,
+		Response: resp,
+	}
+	data = append(data, row)
+
+	row.Request.
+		println("===========================================")
 	println("response")
 	// fmt.Printf("err=%# v RoundTrip=%#v\n", err, resp)
 	fmt.Printf("err=%# v RoundTrip=%# v\n", err, pretty.Formatter(resp))
@@ -58,10 +74,11 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 }
 
 func main() {
+	captureEnd()
 	println("starting proxy...")
+
 	endpoint_url = flag.String("target", "http://athena13:9582/", "target URL for reverse proxy")
 	flag.Parse()
-
 	fmt.Sprintf("endpoint_url=%s\n", endpoint_url)
 
 	// ...
@@ -73,6 +90,7 @@ func main() {
 	proxy.Transport = &transport{http.DefaultTransport}
 
 	//start proxy
+
 	http.Handle("/", proxy)
 	// http.HandleFunc("/", report)
 	log.Fatal(http.ListenAndServe("localhost:9000", nil))
@@ -135,4 +153,16 @@ func copyHeader(source http.Header, dest *http.Header) {
 			dest.Add(n, vv)
 		}
 	}
+}
+
+func captureEnd() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM)
+	go func() {
+		<-c
+		println("end proxy...")
+		os.Exit(1)
+	}()
+
 }
