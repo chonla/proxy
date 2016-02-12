@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -17,7 +18,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/kr/pretty"
+	// "github.com/kr/pretty"
 )
 
 var endpoint_url *string
@@ -29,8 +30,25 @@ type transport struct {
 }
 
 type Recoder struct {
-	Request  *http.Request
-	Response *http.Response
+	Name     string
+	Request  Inbound
+	Response Outbound
+	req      *http.Request  `json:"-"`
+	resp     *http.Response `json:"-"`
+}
+
+type Inbound struct {
+	URI    string
+	Host   string
+	Path   string
+	Method string
+	Body   string
+}
+
+type Outbound struct {
+	Status     string
+	StatusCode int
+	Body       string
 }
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
@@ -39,21 +57,32 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	println("Record Mode")
 	println("===========================================")
 
-	fmt.Printf("req=%# v\n", pretty.Formatter(req))
-	// fmt.Printf("req=%#v\n", req)
+	iBody, err := httputil.DumpRequest(req, true)
+
 	resp, err = t.RoundTripper.RoundTrip(req)
 
+	oBody, err := httputil.DumpResponse(resp, true)
+
 	row := Recoder{
-		Request:  req,
-		Response: resp,
+		req:  req,
+		resp: resp,
+		Request: Inbound{
+			Host:   req.Host,
+			Path:   req.URL.Path,
+			Method: req.Method,
+			Body:   string(iBody),
+		},
+		Response: Outbound{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Body:       string(oBody),
+		},
 	}
+	row.Name = row.req.Method + "|" + row.req.RequestURI + "|" + row.resp.Status + "|"
 	data = append(data, row)
 
-	row.Request.
-		println("===========================================")
-	println("response")
-	// fmt.Printf("err=%# v RoundTrip=%#v\n", err, resp)
-	fmt.Printf("err=%# v RoundTrip=%# v\n", err, pretty.Formatter(resp))
+	writeStub()
+
 	if err != nil {
 		return nil, err
 	}
@@ -161,8 +190,23 @@ func captureEnd() {
 	signal.Notify(c, syscall.SIGTERM)
 	go func() {
 		<-c
+		println()
 		println("end proxy...")
+
 		os.Exit(1)
 	}()
+
+}
+
+func writeStub() {
+	println("write stub...")
+	b, err := json.Marshal(data)
+	fatal(err)
+
+	fmt.Printf("data=%s", string(b))
+	err = ioutil.WriteFile("stub.txt", b, 0666)
+	fatal(err)
+
+	// fmt.Printf("data=%v\n", pretty.Formatter(data))
 
 }
