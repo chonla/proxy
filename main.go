@@ -21,7 +21,16 @@ import (
 	// "github.com/kr/pretty"
 )
 
+type Arg struct {
+	Endpoint     string
+	Mode         string
+	ProxyPort    string
+	StubFileName string
+}
+
+var arg Arg
 var endpoint_url *string
+
 var _ http.RoundTripper = &transport{}
 var data []Recoder
 
@@ -52,16 +61,20 @@ type Outbound struct {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	// report(resp, r)
 	println("===========================================")
 	println("Record Mode")
 	println("===========================================")
 
 	iBody, err := httputil.DumpRequest(req, true)
+	fmt.Printf("req=%#v\n", string(iBody))
+	fatal(err)
 
 	resp, err = t.RoundTripper.RoundTrip(req)
+	fatal(err)
 
 	oBody, err := httputil.DumpResponse(resp, true)
+	fmt.Printf("resp=%#v\n", string(oBody))
+	fatal(err)
 
 	row := Recoder{
 		req:  req,
@@ -103,69 +116,24 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 }
 
 func main() {
-	captureEnd()
+	captureExitProgram()
 	println("starting proxy...")
+	parseArg()
 
-	endpoint_url = flag.String("target", "http://athena13:9582/", "target URL for reverse proxy")
-	flag.Parse()
-	fmt.Sprintf("endpoint_url=%s\n", endpoint_url)
-
-	// ...
-	target, err := url.Parse("http://athena13.tac.co.th:9582/")
+	target, err := url.Parse(arg.Endpoint)
 	fatal(err)
 
 	//assign proxy
 	proxy := httputil.NewSingleHostReverseProxy(target)
 	proxy.Transport = &transport{http.DefaultTransport}
 
-	//start proxy
+	fmt.Printf("arg = %#v\n", arg)
 
+	//start proxy
 	http.Handle("/", proxy)
 	// http.HandleFunc("/", report)
-	log.Fatal(http.ListenAndServe("localhost:9000", nil))
+	log.Fatal(http.ListenAndServe("localhost:"+arg.ProxyPort, nil))
 
-}
-
-func report(w http.ResponseWriter, r *http.Request) {
-	println("Starting request ....")
-	uri := *endpoint_url + r.RequestURI
-
-	fmt.Println(r.Method + ": " + uri)
-
-	rr, err := http.NewRequest(r.Method, uri, r.Body)
-	fatal(err)
-	copyHeader(r.Header, &rr.Header)
-
-	if r.Method == "POST" {
-		body, err := ioutil.ReadAll(r.Body)
-		fatal(err)
-		fmt.Printf("Body: %v\n", string(body))
-	}
-
-	// rr, err := http.NewRequest(r.Method, uri, r.Body)
-	// fatal(err)
-	// copyHeader(r.Header, &rr.Header)
-
-	// Create a client and query the target
-	var transport http.Transport
-	resp, err := transport.RoundTrip(rr)
-	fatal(err)
-
-	println("===========================================")
-	println()
-
-	println("Starting response ....")
-	fmt.Printf("Resp-Headers: %v\n", resp.Header)
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	fatal(err)
-
-	dH := w.Header()
-	copyHeader(resp.Header, &dH)
-	dH.Add("Requested-Host", rr.Host)
-
-	w.Write(body)
 }
 
 func fatal(err error) {
@@ -175,16 +143,7 @@ func fatal(err error) {
 	}
 }
 
-func copyHeader(source http.Header, dest *http.Header) {
-	for n, v := range source {
-		fmt.Printf("HEADER: %v=%v\n", n, v)
-		for _, vv := range v {
-			dest.Add(n, vv)
-		}
-	}
-}
-
-func captureEnd() {
+func captureExitProgram() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, syscall.SIGTERM)
@@ -195,7 +154,6 @@ func captureEnd() {
 
 		os.Exit(1)
 	}()
-
 }
 
 func writeStub() {
@@ -206,7 +164,12 @@ func writeStub() {
 	fmt.Printf("data=%s", string(b))
 	err = ioutil.WriteFile("stub.txt", b, 0666)
 	fatal(err)
+}
 
-	// fmt.Printf("data=%v\n", pretty.Formatter(data))
-
+func parseArg() {
+	flag.StringVar(&arg.Endpoint, "target", "http://athena13.tac.co.th:9582/", "target URL for reverse proxy")
+	flag.StringVar(&arg.ProxyPort, "port", "9000", "proxy running on port. EX: 9000")
+	flag.StringVar(&arg.Mode, "mode", "Record", "proxy running mode [Record/Replay]")
+	flag.StringVar(&arg.StubFileName, "stubFileName", "stub.txt", "record to file name EX stub.txt")
+	flag.Parse()
 }
