@@ -65,53 +65,65 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	println("Record Mode")
 	println("===========================================")
 
+	var cache *http.Response
+
 	iBody, err := httputil.DumpRequest(req, true)
-	fmt.Printf("req=%#v\n", string(iBody))
-	fatal(err)
-
-	resp, err = t.RoundTripper.RoundTrip(req)
-	fatal(err)
-
-	oBody, err := httputil.DumpResponse(resp, true)
-	fmt.Printf("resp=%#v\n", string(oBody))
+	// fmt.Printf("req=%#v\n", string(iBody))
 	fatal(err)
 
 	row := Recoder{
-		req:  req,
-		resp: resp,
+		req: req,
 		Request: Inbound{
 			Host:   req.Host,
 			Path:   req.URL.Path,
 			Method: req.Method,
 			Body:   string(iBody),
 		},
-		Response: Outbound{
-			Status:     resp.Status,
-			StatusCode: resp.StatusCode,
-			Body:       string(oBody),
-		},
 	}
-	row.Name = row.req.Method + "|" + row.req.RequestURI + "|" + row.resp.Status + "|"
-	data = append(data, row)
 
-	writeStub()
+	if arg.Mode == "Replay" {
+		cache = getResponseFromStub()
+	}
 
-	if err != nil {
-		return nil, err
+	fmt.Printf("cache=%v\n\n", cache)
+	if cache != nil {
+		resp = cache
+	} else {
+		resp, err = t.RoundTripper.RoundTrip(req)
+		fatal(err)
+		if err != nil {
+			return nil, err
+		}
 	}
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	fmt.Printf("resp=%#v\n\n", resp)
+
+	if arg.Mode == "Record" {
+		oBody, err := httputil.DumpResponse(resp, true)
+		fatal(err)
+		row.resp = resp
+		row.Response.Status = resp.Status
+		row.Response.StatusCode = resp.StatusCode
+		row.Response.Body = string(oBody)
+		row.Name = row.req.Method + "|" + row.req.RequestURI + "|" + row.resp.Status + "|"
+		data = append(data, row)
+		writeStub()
 	}
-	err = resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
-	body := ioutil.NopCloser(bytes.NewReader(b))
-	resp.Body = body
-	resp.ContentLength = int64(len(b))
-	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
+
+	// // change server to schmerver
+	// b, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// err = resp.Body.Close()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
+	// body := ioutil.NopCloser(bytes.NewReader(b))
+	// resp.Body = body
+	// resp.ContentLength = int64(len(b))
+	// resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
+	changeServer(resp)
 	return resp, nil
 }
 
@@ -172,4 +184,27 @@ func parseArg() {
 	flag.StringVar(&arg.Mode, "mode", "Record", "proxy running mode [Record/Replay]")
 	flag.StringVar(&arg.StubFileName, "stubFileName", "stub.txt", "record to file name EX stub.txt")
 	flag.Parse()
+}
+
+func getResponseFromStub() *http.Response {
+	return nil
+}
+
+func changeServer(resp *http.Response) {
+	// change server to schmerver
+	b, err := ioutil.ReadAll(resp.Body)
+	fatal(err)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	err = resp.Body.Close()
+	fatal(err)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
+	body := ioutil.NopCloser(bytes.NewReader(b))
+	resp.Body = body
+	resp.ContentLength = int64(len(b))
+	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
 }
