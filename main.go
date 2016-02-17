@@ -4,6 +4,7 @@ package main
 // curl -verbose -X POST -d @ReadNewCardWS.txt http://athena13:9582/ReadNewCardWS
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"flag"
@@ -18,7 +19,7 @@ import (
 	"strconv"
 	"syscall"
 
-	// "github.com/kr/pretty"
+	"github.com/kr/pretty"
 )
 
 type Arg struct {
@@ -29,13 +30,17 @@ type Arg struct {
 }
 
 var arg Arg
-var endpoint_url *string
 
 var _ http.RoundTripper = &transport{}
-var data []Recoder
 
 type transport struct {
 	http.RoundTripper
+}
+
+var data Stub
+
+type Stub struct {
+	Record []Recoder `json:"recorder"`
 }
 
 type Recoder struct {
@@ -64,7 +69,6 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	var cache *http.Response
 
 	iBody, err := httputil.DumpRequest(req, true)
-	// fmt.Printf("req=%#v\n", string(iBody))
 	fatal(err)
 
 	row := Recoder{
@@ -78,7 +82,7 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	}
 
 	if arg.Mode == "Replay" {
-		cache = getResponseFromStub()
+		cache = getResponseFromStub(req)
 	}
 
 	fmt.Printf("cache=%v\n\n", cache)
@@ -91,7 +95,6 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			return nil, err
 		}
 	}
-	// fmt.Printf("resp=%#v\n\n", resp)
 
 	if arg.Mode == "Record" {
 		oBody, err := httputil.DumpResponse(resp, true)
@@ -100,11 +103,12 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		row.Response.Status = resp.Status
 		row.Response.StatusCode = resp.StatusCode
 		row.Response.Body = string(oBody)
-		row.Name = row.req.Method + "|" + row.req.RequestURI + "|" + row.resp.Status + "|"
-		data = append(data, row)
+		row.Name = row.req.Method + "|" + row.req.RequestURI
+		// row.Name = row.req.Method + "|" + row.req.RequestURI + "|" + row.resp.Status + "|"
+		data.Record = append(data.Record, row)
 	}
 
-	fmt.Printf("data=%#v\n", len(data))
+	fmt.Printf("data=%#v row\n", len(data.Record))
 
 	changeServer(resp)
 	return resp, nil
@@ -114,6 +118,10 @@ func main() {
 	captureExitProgram()
 	println("starting proxy...")
 	parseArg()
+
+	if arg.Mode == "Replay" {
+		readFromStub()
+	}
 
 	target, err := url.Parse(arg.Endpoint)
 	fatal(err)
@@ -130,6 +138,9 @@ func main() {
 
 func fatal(err error) {
 	if err != nil {
+
+		log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 		log.Fatal(err)
 		os.Exit(1)
 	}
@@ -141,15 +152,15 @@ func captureExitProgram() {
 	signal.Notify(c, syscall.SIGTERM)
 	go func() {
 		<-c
-		println()
-		println("writing stub file ...")
-		writeStub()
+		// writeStub()
+
 		println("end proxy...")
 		os.Exit(1)
 	}()
 }
 
 func writeStub() {
+	println()
 	println("write stub...")
 	b, err := json.Marshal(data)
 	fatal(err)
@@ -172,8 +183,31 @@ func parseArg() {
 	fmt.Printf("arg = %#v\n", arg)
 }
 
-func getResponseFromStub() *http.Response {
-	return nil
+func readFromStub() {
+	b, err := ioutil.ReadFile(arg.StubFileName)
+	fatal(err)
+
+	fmt.Printf("read file = %# v\n", string(b))
+
+	err = json.Unmarshal(b, data)
+	fatal(err)
+
+	fmt.Printf("read data = %# v\n", pretty.Formatter(data))
+}
+
+func getResponseFromStub(req *http.Request) *http.Response {
+	b := []byte(data.Record[0].Response.Body)
+
+	var reader *bufio.Reader
+	n, err := reader.Read(b)
+
+	fmt.Printf("n=%v,err=%v\n", n, err)
+
+	r, err := http.ReadResponse(reader, req)
+	fatal(err)
+
+	fmt.Printf("r=%v\n", r)
+	return r
 }
 
 func changeServer(resp *http.Response) {

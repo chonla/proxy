@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+var endpoint_url *string
+
 func copyHeader(source http.Header, dest *http.Header) {
 	for n, v := range source {
 		fmt.Printf("HEADER: %v=%v\n", n, v)
