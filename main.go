@@ -61,10 +61,6 @@ type Outbound struct {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	println("===========================================")
-	println("Record Mode")
-	println("===========================================")
-
 	var cache *http.Response
 
 	iBody, err := httputil.DumpRequest(req, true)
@@ -95,7 +91,7 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			return nil, err
 		}
 	}
-	fmt.Printf("resp=%#v\n\n", resp)
+	// fmt.Printf("resp=%#v\n\n", resp)
 
 	if arg.Mode == "Record" {
 		oBody, err := httputil.DumpResponse(resp, true)
@@ -106,23 +102,10 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		row.Response.Body = string(oBody)
 		row.Name = row.req.Method + "|" + row.req.RequestURI + "|" + row.resp.Status + "|"
 		data = append(data, row)
-		writeStub()
 	}
 
-	// // change server to schmerver
-	// b, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// err = resp.Body.Close()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
-	// body := ioutil.NopCloser(bytes.NewReader(b))
-	// resp.Body = body
-	// resp.ContentLength = int64(len(b))
-	// resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
+	fmt.Printf("data=%#v\n", len(data))
+
 	changeServer(resp)
 	return resp, nil
 }
@@ -139,13 +122,10 @@ func main() {
 	proxy := httputil.NewSingleHostReverseProxy(target)
 	proxy.Transport = &transport{http.DefaultTransport}
 
-	fmt.Printf("arg = %#v\n", arg)
-
 	//start proxy
 	http.Handle("/", proxy)
 	// http.HandleFunc("/", report)
 	log.Fatal(http.ListenAndServe("localhost:"+arg.ProxyPort, nil))
-
 }
 
 func fatal(err error) {
@@ -162,8 +142,9 @@ func captureExitProgram() {
 	go func() {
 		<-c
 		println()
+		println("writing stub file ...")
+		writeStub()
 		println("end proxy...")
-
 		os.Exit(1)
 	}()
 }
@@ -173,7 +154,7 @@ func writeStub() {
 	b, err := json.Marshal(data)
 	fatal(err)
 
-	fmt.Printf("data=%s", string(b))
+	// fmt.Printf("data=%s", string(b))
 	err = ioutil.WriteFile("stub.txt", b, 0666)
 	fatal(err)
 }
@@ -184,6 +165,11 @@ func parseArg() {
 	flag.StringVar(&arg.Mode, "mode", "Record", "proxy running mode [Record/Replay]")
 	flag.StringVar(&arg.StubFileName, "stubFileName", "stub.txt", "record to file name EX stub.txt")
 	flag.Parse()
+
+	println("===========================================")
+	println(arg.Mode, " Mode")
+	println("===========================================")
+	fmt.Printf("arg = %#v\n", arg)
 }
 
 func getResponseFromStub() *http.Response {
@@ -191,7 +177,6 @@ func getResponseFromStub() *http.Response {
 }
 
 func changeServer(resp *http.Response) {
-	// change server to schmerver
 	b, err := ioutil.ReadAll(resp.Body)
 	fatal(err)
 	// if err != nil {
