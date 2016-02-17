@@ -1,5 +1,35 @@
 {
-	"list": {
+	"stub": {
+		"GET|http://adrastea12:7731/PartnerAPI/api/CheckPartner_By_UserID?UserID=OMRLAN2": {
+			"Name": "GET|http://adrastea12:7731/PartnerAPI/api/CheckPartner_By_UserID?UserID=OMRLAN2",
+			"Request": {
+				"URI": "",
+				"Host": "adrastea12:7731",
+				"Path": "/PartnerAPI/api/CheckPartner_By_UserID",
+				"Method": "GET",
+				"Body": "R0VUIC9QYXJ0bmVyQVBJL2FwaS9DaGVja1BhcnRuZXJfQnlfVXNlcklEP1VzZXJJRD1PTVJMQU4yIEhUVFAvMS4xDQpIb3N0OiBhZHJhc3RlYTEyOjc3MzENCkFjY2VwdC1FbmNvZGluZzogZ3ppcA0KVXNlci1BZ2VudDogR28taHR0cC1jbGllbnQvMS4xDQpYLUZvcndhcmRlZC1Gb3I6IDEyNy4wLjAuMQ0KDQo="
+			},
+			"Response": {
+				"Status": "200 OK",
+				"StatusCode": 200,
+				"Body": "SFRUUC8xLjEgMjAwIE9LDQpUcmFuc2Zlci1FbmNvZGluZzogY2h1bmtlZA0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9qc29uOyBjaGFyc2V0PXV0Zi04DQpEYXRlOiBXZWQsIDE3IEZlYiAyMDE2IDA5OjUwOjQzIEdNVA0KWC1Qb3dlcmVkLUJ5OiBTZXJ2bGV0LzIuNSBKU1AvMi4xDQoNCjg2DQp7IkRFQUxFUl9DT0RFIjoiMTUzNTkiLCJQQVJUTkVSX0NPREUiOiI3MTQzODg4NyIsIlNUQVRVUyI6IkFjdGl2ZSIsIlBBUlRORVJfTkFNRSI6ImR0YWMgaGFsbCDguIjguLLguKHguIjguLjguKPguLXguKrguYHguITguKfguKPguYwifQ0KMA0KDQo="
+			}
+		},
+		"POST|http://10.89.90.93/contacthistory/tsc/_search": {
+			"Name": "POST|http://10.89.90.93/contacthistory/tsc/_search",
+			"Request": {
+				"URI": "",
+				"Host": "10.89.90.93",
+				"Path": "/contacthistory/tsc/_search",
+				"Method": "POST",
+				"Body": "UE9TVCAvY29udGFjdGhpc3RvcnkvdHNjL19zZWFyY2ggSFRUUC8xLjENCkhvc3Q6IDEwLjg5LjkwLjkzDQpBY2NlcHQtRW5jb2Rpbmc6IGd6aXANCkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbg0KVXNlci1BZ2VudDogR28taHR0cC1jbGllbnQvMS4xDQpYLUZvcndhcmRlZC1Gb3I6IDEyNy4wLjAuMQ0KDQp7ImZyb20iOjAsInNpemUiOjUwLCJxdWVyeSI6eyJib29sIjp7Im11c3QiOlt7Im1hdGNoIjp7ImN1c3RvbWVyVHlwZS5Qb3N0cGFpZF9JbmRpdmlkdWFsIjp0cnVlfX0seyJtYXRjaCI6eyJ0eXBlLmlkIjoiNTZhNzI0OTdjYTdlYTU3M2RhNWIyOTYyIn19LHsibWF0Y2giOnsic3ViVHlwZS5pZCI6IjU2YTcyNGExY2E3ZWE1NzcwZWIwOTBjNSJ9fV19fX0K"
+			},
+			"Response": {
+				"Status": "200 OK",
+				"StatusCode": 200,
+				"Body": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LUxlbmd0aDogMTIyDQpDb25uZWN0aW9uOiBrZWVwLWFsaXZlDQpDb250ZW50LVR5cGU6IGFwcGxpY2F0aW9uL2pzb247IGNoYXJzZXQ9VVRGLTgNCkRhdGU6IFdlZCwgMTcgRmViIDIwMTYgMDk6NDM6MjcgR01UDQoNCnsidG9vayI6MSwidGltZWRfb3V0IjpmYWxzZSwiX3NoYXJkcyI6eyJ0b3RhbCI6Mywic3VjY2Vzc2Z1bCI6MywiZmFpbGVkIjowfSwiaGl0cyI6eyJ0b3RhbCI6MCwibWF4X3Njb3JlIjpudWxsLCJoaXRzIjpbXX19"
+			}
+		},
 		"POST|http://athena13.tac.co.th:9582/ListUserDealWS": {
 			"Name": "POST|http://athena13.tac.co.th:9582/ListUserDealWS",
 			"Request": {

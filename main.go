@@ -41,7 +41,7 @@ type transport struct {
 var data Stub
 
 type Stub struct {
-	List map[string]Recoder `json:"list"`
+	List map[string]Recoder `json:"stub"`
 }
 
 type Recoder struct {
@@ -68,11 +68,48 @@ type Outbound struct {
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	var cache *http.Response
+	row := recordRequest(req)
 
+	if arg.Mode == "Replay" {
+		cache = getResponseFromStub(req)
+	}
+
+	unproxyURL(req)
+	// fmt.Printf("req=%# v\n\n\n", pretty.Formatter(req))
+
+	if cache != nil {
+		resp = cache
+		fmt.Printf("cache hit=%#v\n", pretty.Formatter(cache))
+	} else {
+		println("cache miss, call http")
+		resp, err = t.RoundTripper.RoundTrip(req)
+
+		// fmt.Printf("resp=%# v\n", pretty.Formatter(resp))
+
+		fatal(err)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	recordResponse(row, resp)
+	fmt.Printf("data has %v row\n", len(data.List))
+	changeServer(resp)
+	return resp, nil
+}
+
+func unproxyURL(req *http.Request) {
+	target, err := url.Parse(req.RequestURI)
+	fatal(err)
+
+	req.URL = target
+}
+
+func recordRequest(req *http.Request) Recoder {
 	iBody, err := httputil.DumpRequest(req, true)
 	fatal(err)
 
-	row := Recoder{
+	return Recoder{
 		req: req,
 		Request: Inbound{
 			Host:   req.Host,
@@ -82,35 +119,17 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		},
 	}
 
-	if arg.Mode == "Replay" {
-		cache = getResponseFromStub(req)
-	}
+}
 
-	if cache != nil {
-		resp = cache
-		fmt.Printf("cache hit=%v\n", pretty.Formatter(cache))
-	} else {
-		println("call http")
-		resp, err = t.RoundTripper.RoundTrip(req)
-		fatal(err)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if arg.Mode == "Record" {
-		oBody, err := httputil.DumpResponse(resp, true)
-		fatal(err)
-		row.resp = resp
-		row.Response.Status = resp.Status
-		row.Response.StatusCode = resp.StatusCode
-		row.Response.Body = oBody
-		row.Name = req.Method + "|" + req.RequestURI
-		data.List[row.Name] = row
-	}
-
-	changeServer(resp)
-	return resp, nil
+func recordResponse(row Recoder, resp *http.Response) {
+	oBody, err := httputil.DumpResponse(resp, true)
+	fatal(err)
+	row.resp = resp
+	row.Response.Status = resp.Status
+	row.Response.StatusCode = resp.StatusCode
+	row.Response.Body = oBody
+	row.Name = row.req.Method + "|" + row.req.RequestURI
+	data.List[row.Name] = row
 }
 
 func main() {
@@ -164,8 +183,7 @@ func writeStub() {
 		b, err := json.Marshal(data)
 		fatal(err)
 
-		// fmt.Printf("data=%s", string(b))
-		err = ioutil.WriteFile("stub.txt", b, 0666)
+		err = ioutil.WriteFile(arg.StubFileName, b, 0666)
 		fatal(err)
 	}
 }
@@ -178,7 +196,7 @@ func parseArg() {
 	flag.Parse()
 
 	println("===========================================")
-	println(arg.Mode, " Mode")
+	println(arg.Mode, "Mode")
 	println("===========================================")
 	fmt.Printf("arg = %#v\n", arg)
 }
@@ -194,6 +212,7 @@ func readFromStub() {
 func getResponseFromStub(req *http.Request) *http.Response {
 	name := req.Method + "|" + req.RequestURI
 
+	fmt.Printf("name=%s\n", name)
 	if row, found := data.List[name]; found {
 		b := row.Response.Body
 		reader := bufio.NewReader(bytes.NewReader(b))
