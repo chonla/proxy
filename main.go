@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	// "io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -40,7 +41,7 @@ type transport struct {
 var data Stub
 
 type Stub struct {
-	Record []Recoder `json:"recorder"`
+	List map[string]Recoder `json:"list"`
 }
 
 type Recoder struct {
@@ -56,13 +57,13 @@ type Inbound struct {
 	Host   string
 	Path   string
 	Method string
-	Body   string
+	Body   []byte
 }
 
 type Outbound struct {
 	Status     string
 	StatusCode int
-	Body       string
+	Body       []byte
 }
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
@@ -77,7 +78,7 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			Host:   req.Host,
 			Path:   req.URL.Path,
 			Method: req.Method,
-			Body:   string(iBody),
+			Body:   iBody,
 		},
 	}
 
@@ -85,10 +86,11 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		cache = getResponseFromStub(req)
 	}
 
-	fmt.Printf("cache=%v\n\n", cache)
 	if cache != nil {
 		resp = cache
+		fmt.Printf("cache hit=%v\n", pretty.Formatter(cache))
 	} else {
+		println("call http")
 		resp, err = t.RoundTripper.RoundTrip(req)
 		fatal(err)
 		if err != nil {
@@ -102,13 +104,10 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		row.resp = resp
 		row.Response.Status = resp.Status
 		row.Response.StatusCode = resp.StatusCode
-		row.Response.Body = string(oBody)
-		row.Name = row.req.Method + "|" + row.req.RequestURI
-		// row.Name = row.req.Method + "|" + row.req.RequestURI + "|" + row.resp.Status + "|"
-		data.Record = append(data.Record, row)
+		row.Response.Body = oBody
+		row.Name = req.Method + "|" + req.RequestURI
+		data.List[row.Name] = row
 	}
-
-	fmt.Printf("data=%#v row\n", len(data.Record))
 
 	changeServer(resp)
 	return resp, nil
@@ -118,6 +117,7 @@ func main() {
 	captureExitProgram()
 	println("starting proxy...")
 	parseArg()
+	data.List = make(map[string]Recoder)
 
 	if arg.Mode == "Replay" {
 		readFromStub()
@@ -138,9 +138,7 @@ func main() {
 
 func fatal(err error) {
 	if err != nil {
-
 		log.SetFlags(log.LstdFlags | log.Lshortfile)
-
 		log.Fatal(err)
 		os.Exit(1)
 	}
@@ -152,22 +150,24 @@ func captureExitProgram() {
 	signal.Notify(c, syscall.SIGTERM)
 	go func() {
 		<-c
-		// writeStub()
-
+		writeStub()
+		println()
 		println("end proxy...")
 		os.Exit(1)
 	}()
 }
 
 func writeStub() {
-	println()
-	println("write stub...")
-	b, err := json.Marshal(data)
-	fatal(err)
+	if arg.Mode == "Record" {
+		println()
+		println("write stub...")
+		b, err := json.Marshal(data)
+		fatal(err)
 
-	// fmt.Printf("data=%s", string(b))
-	err = ioutil.WriteFile("stub.txt", b, 0666)
-	fatal(err)
+		// fmt.Printf("data=%s", string(b))
+		err = ioutil.WriteFile("stub.txt", b, 0666)
+		fatal(err)
+	}
 }
 
 func parseArg() {
@@ -187,27 +187,21 @@ func readFromStub() {
 	b, err := ioutil.ReadFile(arg.StubFileName)
 	fatal(err)
 
-	fmt.Printf("read file = %# v\n", string(b))
-
-	err = json.Unmarshal(b, data)
+	err = json.Unmarshal(b, &data)
 	fatal(err)
-
-	fmt.Printf("read data = %# v\n", pretty.Formatter(data))
 }
 
 func getResponseFromStub(req *http.Request) *http.Response {
-	b := []byte(data.Record[0].Response.Body)
+	name := req.Method + "|" + req.RequestURI
 
-	var reader *bufio.Reader
-	n, err := reader.Read(b)
-
-	fmt.Printf("n=%v,err=%v\n", n, err)
-
-	r, err := http.ReadResponse(reader, req)
-	fatal(err)
-
-	fmt.Printf("r=%v\n", r)
-	return r
+	if row, found := data.List[name]; found {
+		b := row.Response.Body
+		reader := bufio.NewReader(bytes.NewReader(b))
+		r, err := http.ReadResponse(reader, req)
+		fatal(err)
+		return r
+	}
+	return nil
 }
 
 func changeServer(resp *http.Response) {
