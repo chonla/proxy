@@ -17,7 +17,9 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	// "regexp"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/kr/pretty"
@@ -57,13 +59,15 @@ type Inbound struct {
 	Host   string
 	Path   string
 	Method string
-	Body   []byte
+	// Body   []byte
+	Body string
 }
 
 type Outbound struct {
 	Status     string
 	StatusCode int
-	Body       []byte
+	// Body   []byte
+	Body string
 }
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
@@ -115,7 +119,8 @@ func recordRequest(req *http.Request) Recoder {
 			Host:   req.Host,
 			Path:   req.URL.Path,
 			Method: req.Method,
-			Body:   iBody,
+			// Body:   iBody,
+			Body: string(iBody),
 		},
 	}
 
@@ -127,7 +132,8 @@ func recordResponse(row Recoder, resp *http.Response) {
 	row.resp = resp
 	row.Response.Status = resp.Status
 	row.Response.StatusCode = resp.StatusCode
-	row.Response.Body = oBody
+	// row.Response.Body = oBody
+	row.Response.Body = string(oBody)
 	row.Name = row.req.Method + "|" + row.req.RequestURI
 	data.List[row.Name] = row
 }
@@ -214,7 +220,8 @@ func getResponseFromStub(req *http.Request) *http.Response {
 
 	fmt.Printf("name=%s\n", name)
 	if row, found := data.List[name]; found {
-		b := row.Response.Body
+		// b := row.Response.Body
+		b := []byte(row.Response.Body)
 		reader := bufio.NewReader(bytes.NewReader(b))
 		r, err := http.ReadResponse(reader, req)
 		fatal(err)
@@ -226,17 +233,38 @@ func getResponseFromStub(req *http.Request) *http.Response {
 func changeServer(resp *http.Response) {
 	b, err := ioutil.ReadAll(resp.Body)
 	fatal(err)
-	// if err != nil {
-	// 	return nil, err
-	// }
+
 	err = resp.Body.Close()
 	fatal(err)
-	// if err != nil {
-	// 	return nil, err
-	// }
+
 	b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
 	body := ioutil.NopCloser(bytes.NewReader(b))
 	resp.Body = body
 	resp.ContentLength = int64(len(b))
 	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
+}
+
+// func getValueByKey(key, data string) string {
+// 	b_data := []byte(data)
+// 	b_key := []byte(key)
+
+// 	re := regexp.MustCompile(key + "(9*)" + key)
+// 	result := re.FindAllStringSubmatch(data, -1)
+// 	fmt.Printf("result =%# v\n", pretty.Formatter(result))
+
+// 	b_data = bytes.TrimPrefix(b_data, b_key)
+
+// 	return string(b_data)
+// }
+
+func getValueByKey(key string, data string) string {
+	list := strings.FieldsFunc(data, func(r rune) bool {
+		return r == '<' || r == '>'
+	})
+	for i, s := range list {
+		if s == "urn:"+key {
+			return list[i+1]
+		}
+	}
+	return ""
 }
