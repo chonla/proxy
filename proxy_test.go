@@ -5,7 +5,7 @@ import "testing"
 func TestGetValueByKeyName(t *testing.T) {
 	data := "<urn:SUBR_NUMB>66897893394</urn:SUBR_NUMB>"
 
-	result := getValueByKey("SUBR_NUMB", data)
+	result := getValueByKey("urn:SUBR_NUMB", data)
 
 	if result != "66897893394" {
 		t.Error("expect 66897893394 but got", result)
@@ -22,7 +22,7 @@ func TestGetValueFromRAW(t *testing.T) {
            <ccin:BillCycleMonth>201501</ccin:BillCycleMonth>
         </bbm:QueryEstimatedChargeRequest>`
 
-	result := getValueByKey("AccountCode", data)
+	result := getValueByKey("ccin:AccountCode", data)
 
 	if result != "xxxxxxx" {
 		t.Error("expect xxxxxxx but got", result)

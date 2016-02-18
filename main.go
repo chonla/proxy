@@ -244,25 +244,12 @@ func changeServer(resp *http.Response) {
 	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
 }
 
-// func getValueByKey(key, data string) string {
-// 	b_data := []byte(data)
-// 	b_key := []byte(key)
-
-// 	re := regexp.MustCompile(key + "(9*)" + key)
-// 	result := re.FindAllStringSubmatch(data, -1)
-// 	fmt.Printf("result =%# v\n", pretty.Formatter(result))
-
-// 	b_data = bytes.TrimPrefix(b_data, b_key)
-
-// 	return string(b_data)
-// }
-
 func getValueByKey(key string, data string) string {
 	list := strings.FieldsFunc(data, func(r rune) bool {
 		return r == '<' || r == '>'
 	})
 	for i, s := range list {
-		if s == "urn:"+key {
+		if s == key {
 			return list[i+1]
 		}
 	}
