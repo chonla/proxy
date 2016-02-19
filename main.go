@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	// "io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,8 +16,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	// "regexp"
-	"strconv"
+	// "strconv"
 	"strings"
 	"syscall"
 
@@ -70,37 +68,55 @@ type Outbound struct {
 	Body string
 }
 
-func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+func (r Recoder) getFromCache(t *transport) (*http.Response, error) {
 	var cache *http.Response
-	row := recordRequest(req)
-
 	if arg.Mode == "Replay" {
-		cache = getResponseFromStub(req)
+		cache = getResponseFromStub(r.req)
 	}
-
-	unproxyURL(req)
-	// fmt.Printf("req=%# v\n\n\n", pretty.Formatter(req))
 
 	if cache != nil {
-		resp = cache
 		fmt.Printf("cache hit=%#v\n", pretty.Formatter(cache))
-	} else {
-		println("cache miss, call http")
-		resp, err = t.RoundTripper.RoundTrip(req)
-
-		// fmt.Printf("resp=%# v\n", pretty.Formatter(resp))
-
-		fatal(err)
-		if err != nil {
-			return nil, err
-		}
+		return cache, nil
 	}
+	println("cache miss, call http")
+	resp, err := t.RoundTripper.RoundTrip(r.req)
+	return resp, err
 
+}
+
+func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	// fmt.Printf("req=%# v\n\n\n", pretty.Formatter(req))
+	row := recordRequest(req)
+	unproxyURL(req)
+	resp, err = row.getFromCache(t)
 	recordResponse(row, resp)
 	fmt.Printf("data has %v row\n", len(data.List))
-	changeServer(resp)
+	// changeServer(resp)
 	return resp, nil
 }
+
+// func getFromCache(resp *http.Response) *http.Response {
+// 	var cache *http.Response
+// 	if arg.Mode == "Replay" {
+// 		cache = getResponseFromStub(req)
+// 	}
+
+// 	if cache != nil {
+// 		resp = cache
+// 		fmt.Printf("cache hit=%#v\n", pretty.Formatter(cache))
+// 	} else {
+// 		println("cache miss, call http")
+// 		resp, err = t.RoundTripper.RoundTrip(req)
+
+// 		// fmt.Printf("resp=%# v\n", pretty.Formatter(resp))
+
+// 		fatal(err)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+
+// }
 
 func unproxyURL(req *http.Request) {
 	target, err := url.Parse(req.RequestURI)
@@ -230,19 +246,19 @@ func getResponseFromStub(req *http.Request) *http.Response {
 	return nil
 }
 
-func changeServer(resp *http.Response) {
-	b, err := ioutil.ReadAll(resp.Body)
-	fatal(err)
+// func changeServer(resp *http.Response) {
+// 	b, err := ioutil.ReadAll(resp.Body)
+// 	fatal(err)
 
-	err = resp.Body.Close()
-	fatal(err)
+// 	err = resp.Body.Close()
+// 	fatal(err)
 
-	b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
-	body := ioutil.NopCloser(bytes.NewReader(b))
-	resp.Body = body
-	resp.ContentLength = int64(len(b))
-	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
-}
+// 	b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
+// 	body := ioutil.NopCloser(bytes.NewReader(b))
+// 	resp.Body = body
+// 	resp.ContentLength = int64(len(b))
+// 	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
+// }
 
 func getValueByKey(key string, data string) string {
 	list := strings.FieldsFunc(data, func(r rune) bool {
