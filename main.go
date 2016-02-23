@@ -6,11 +6,13 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -80,48 +82,33 @@ func (r Recoder) getFromCache(t *transport) (*http.Response, error) {
 	}
 	println("cache miss, call http")
 	resp, err := t.RoundTripper.RoundTrip(r.req)
+	fmt.Printf("err=%# v, resp=%# v\n\n\n", err, pretty.Formatter(resp))
 	return resp, err
 
 }
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	// fmt.Printf("req=%# v\n\n\n", pretty.Formatter(req))
+	fmt.Printf("req=%# v\n\n\n", pretty.Formatter(req))
 	row := recordRequest(req)
 	unproxyURL(req)
 	resp, err = row.getFromCache(t)
-	recordResponse(row, resp)
-	fmt.Printf("data has %v row\n", len(data.List))
-	// changeServer(resp)
+	if err != nil {
+		recordResponse(row, resp)
+	}
+
 	return resp, nil
 }
 
-// func getFromCache(resp *http.Response) *http.Response {
-// 	var cache *http.Response
-// 	if arg.Mode == "Replay" {
-// 		cache = getResponseFromStub(req)
-// 	}
-
-// 	if cache != nil {
-// 		resp = cache
-// 		fmt.Printf("cache hit=%#v\n", pretty.Formatter(cache))
-// 	} else {
-// 		println("cache miss, call http")
-// 		resp, err = t.RoundTripper.RoundTrip(req)
-
-// 		// fmt.Printf("resp=%# v\n", pretty.Formatter(resp))
-
-// 		fatal(err)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
-
-// }
-
 func unproxyURL(req *http.Request) {
-	target, err := url.Parse(req.RequestURI)
-	fatal(err)
+	fmt.Printf("req.RequestURI=%v\n", req.RequestURI)
+	strURL := req.RequestURI
 
+	// TODO: add logic convert http to https
+	if req.RequestURI == "http://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm" {
+		strURL = "https://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm"
+	}
+	target, err := url.Parse(strURL)
+	fatal(err)
 	req.URL = target
 }
 
@@ -169,12 +156,23 @@ func main() {
 
 	//assign proxy
 	proxy := httputil.NewSingleHostReverseProxy(target)
-	proxy.Transport = &transport{http.DefaultTransport}
+	proxy.Transport = &transport{&http.Transport{
+		Dial: (&net.Dialer{}).Dial,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS10,
+			MaxVersion:         tls.VersionTLS10,
+		},
+		DisableCompression: false,
+		DisableKeepAlives:  true,
+	}}
 
 	//start proxy
 	http.Handle("/", proxy)
-	// http.HandleFunc("/", report)
 	log.Fatal(http.ListenAndServe("localhost:"+arg.ProxyPort, nil))
+
+	// println("run proxy https")
+	// fatal(http.ListenAndServeTLS("localhost:9001", "cert.pem", "key.pem", nil))
 }
 
 func fatal(err error) {
@@ -211,7 +209,7 @@ func writeStub() {
 }
 
 func parseArg() {
-	flag.StringVar(&arg.Endpoint, "target", "http://athena13.tac.co.th:9582/", "target URL for reverse proxy")
+	flag.StringVar(&arg.Endpoint, "target", "https://gliese1dtac-blqrysb.tac.co.th:7834/", "target URL for reverse proxy")
 	flag.StringVar(&arg.ProxyPort, "port", "9000", "proxy running on port. EX: 9000")
 	flag.StringVar(&arg.Mode, "mode", "Record", "proxy running mode [Record/Replay]")
 	flag.StringVar(&arg.StubFileName, "stubFileName", "stub.txt", "record to file name EX stub.txt")
@@ -245,20 +243,6 @@ func getResponseFromStub(req *http.Request) *http.Response {
 	}
 	return nil
 }
-
-// func changeServer(resp *http.Response) {
-// 	b, err := ioutil.ReadAll(resp.Body)
-// 	fatal(err)
-
-// 	err = resp.Body.Close()
-// 	fatal(err)
-
-// 	b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
-// 	body := ioutil.NopCloser(bytes.NewReader(b))
-// 	resp.Body = body
-// 	resp.ContentLength = int64(len(b))
-// 	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
-// }
 
 func getValueByKey(key string, data string) string {
 	list := strings.FieldsFunc(data, func(r rune) bool {
