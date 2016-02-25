@@ -6,12 +6,12 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"crypto/rand"
+	// "crypto/rand"
 	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
+	// "io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -84,17 +84,19 @@ func (r Recoder) getFromCache(t *transport) (*http.Response, error) {
 	}
 	println("cache miss, call http")
 	resp, err := t.RoundTripper.RoundTrip(r.req)
-	fmt.Printf("err=%# v, resp=%# v\n\n\n", err, pretty.Formatter(resp))
+	fmt.Printf("getFromCache: err=%# v, resp=%# v\n\n\n", err, pretty.Formatter(resp))
 	return resp, err
 
 }
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	fmt.Printf("req=%# v\n\n\n", pretty.Formatter(req))
+	fmt.Printf("RoundTrip req=%# v\n\n\n", pretty.Formatter(req))
 	row := recordRequest(req)
 	unproxyURL(req)
+	fmt.Printf("unproxyURL req=%# v\n\n\n", pretty.Formatter(req))
+
 	resp, err = row.getFromCache(t)
-	if err != nil {
+	if err == nil {
 		recordResponse(row, resp)
 	}
 
@@ -102,13 +104,14 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 }
 
 func unproxyURL(req *http.Request) {
-	fmt.Printf("req.RequestURI=%v\n", req.RequestURI)
+	// fmt.Printf("req.RequestURI=%v\nreq.", req.RequestURI, req.Host, req.)
 	strURL := req.RequestURI
 
+	// req.Host = req.URL.
 	// TODO: add logic convert http to https
-	if req.RequestURI == "http://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm" {
-		strURL = "https://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm"
-	}
+	// if req.RequestURI == "http://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm" {
+	// 	strURL = "https://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm"
+	// }
 	target, err := url.Parse(strURL)
 	fatal(err)
 	req.URL = target
@@ -143,93 +146,59 @@ func recordResponse(row Recoder, resp *http.Response) {
 	data.List[row.Name] = row
 }
 
-func main() {
-	captureExitProgram()
-	println("starting proxy...")
-	parseArg()
-	data.List = make(map[string]Recoder)
+// func servHTTPS() {
+// 	//start https proxy
+// 	println("run proxy https")
+// 	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
+// 	if err != nil {
+// 		log.Fatalf("server: loadkeys: %s", err)
+// 	}
+// 	config := tls.Config{
+// 		Certificates:       []tls.Certificate{cert},
+// 		InsecureSkipVerify: true,
+// 		MinVersion:         tls.VersionTLS10,
+// 		MaxVersion:         tls.VersionTLS10,
+// 	}
+// 	config.Rand = rand.Reader
+// 	service := ":8000"
+// 	listener, err := tls.Listen("tcp", service, &config)
+// 	if err != nil {
+// 		log.Fatalf("server: listen: %s", err)
+// 	}
+// 	fatal(http.Serve(listener, nil))
+// 	// fatal(http.ListenAndServeTLS("localhost:8000", "cert.pem", "key.pem", nil))
 
-	if arg.Mode == "Replay" {
-		readFromStub()
-	}
+// }
 
-	target, err := url.Parse(arg.Endpoint)
-	fatal(err)
+// func serveTCP() {
+// 	println("run proxy tcp 8000")
+// 	l, err := net.Listen("tcp", ":8000")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer l.Close()
+// 	for {
+// 		// Wait for a connection.
+// 		conn, err := l.Accept()
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
+// 		// Handle the connection in a new goroutine.
+// 		// The loop then returns to accepting, so that
+// 		// multiple connections may be served concurrently.
+// 		go func(c net.Conn) {
+// 			// Echo all incoming data.
 
-	//assign proxy
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	proxy.Transport = &transport{&http.Transport{
-		Dial: (&net.Dialer{}).Dial,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			MinVersion:         tls.VersionTLS10,
-			MaxVersion:         tls.VersionTLS10,
-		},
-		DisableCompression: false,
-		DisableKeepAlives:  true,
-	}}
+// 			fmt.Printf("c=%# v", c)
 
-	go serveTCP()
+// 			println("hello")
+// 			io.Copy(c, c)
 
-	//start proxy
-	println("run proxy http")
-	http.Handle("/", proxy)
-	log.Fatal(http.ListenAndServe("localhost:"+arg.ProxyPort, nil))
-}
-
-func servHTTPS() {
-	//start https proxy
-	println("run proxy https")
-	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
-	if err != nil {
-		log.Fatalf("server: loadkeys: %s", err)
-	}
-	config := tls.Config{
-		Certificates:       []tls.Certificate{cert},
-		InsecureSkipVerify: true,
-		MinVersion:         tls.VersionTLS10,
-		MaxVersion:         tls.VersionTLS10,
-	}
-	config.Rand = rand.Reader
-	service := ":8000"
-	listener, err := tls.Listen("tcp", service, &config)
-	if err != nil {
-		log.Fatalf("server: listen: %s", err)
-	}
-	fatal(http.Serve(listener, nil))
-	// fatal(http.ListenAndServeTLS("localhost:8000", "cert.pem", "key.pem", nil))
-
-}
-
-func serveTCP() {
-	println("run proxy tcp 8000")
-	l, err := net.Listen("tcp", ":8000")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer l.Close()
-	for {
-		// Wait for a connection.
-		conn, err := l.Accept()
-		if err != nil {
-			log.Fatal(err)
-		}
-		// Handle the connection in a new goroutine.
-		// The loop then returns to accepting, so that
-		// multiple connections may be served concurrently.
-		go func(c net.Conn) {
-			// Echo all incoming data.
-
-			fmt.Printf("c=%# v", c)
-
-			println("hello")
-			io.Copy(c, c)
-
-			// Shut down the connection.
-			c.Close()
-		}(conn)
-	}
-}
+// 			// Shut down the connection.
+// 			c.Close()
+// 		}(conn)
+// 	}
+// }
 
 func fatal(err error) {
 	if err != nil {
@@ -265,7 +234,7 @@ func writeStub() {
 }
 
 func parseArg() {
-	flag.StringVar(&arg.Endpoint, "target", "https://gliese1dtac-blqrysb.tac.co.th:7834/", "target URL for reverse proxy")
+	flag.StringVar(&arg.Endpoint, "target", "https://curl.haxx.se/", "target URL for reverse proxy")
 	flag.StringVar(&arg.ProxyPort, "port", "9000", "proxy running on port. EX: 9000")
 	flag.StringVar(&arg.Mode, "mode", "Record", "proxy running mode [Record/Replay]")
 	flag.StringVar(&arg.StubFileName, "stubFileName", "stub.txt", "record to file name EX stub.txt")
@@ -310,4 +279,87 @@ func getValueByKey(key string, data string) string {
 		}
 	}
 	return ""
+}
+
+func main() {
+	captureExitProgram()
+	println("starting proxy...")
+	parseArg()
+	data.List = make(map[string]Recoder)
+
+	if arg.Mode == "Replay" {
+		readFromStub()
+	}
+
+	target, err := url.Parse(arg.Endpoint)
+	fatal(err)
+
+	//assign proxy
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy.Transport = &transport{&http.Transport{
+		Dial: (&net.Dialer{}).Dial,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS10,
+			MaxVersion:         tls.VersionTLS10,
+		},
+		DisableCompression: false,
+		DisableKeepAlives:  true,
+	}}
+
+	// go serveTCP()
+	// http.Handle("/", proxy)
+
+	go serveServerHTTPS(proxy)
+
+	//start proxy
+	println("run proxy http")
+	log.Fatal(http.ListenAndServe("localhost:"+arg.ProxyPort, nil))
+}
+
+type ServerHTTPS struct {
+	// http.HandleFunc
+}
+
+func (s ServerHTTPS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("https req=%# v\n\n\n", pretty.Formatter(r))
+}
+
+func logHttp(w http.ResponseWriter, r *http.Request) {
+	println("logHttp")
+	//fmt.Printf("log http req=%# v\n\n\n", pretty.Formatter(r))
+}
+
+type mx struct {
+	// http.ServeMux
+}
+
+var mux map[string]func(http.ResponseWriter, *http.Request)
+
+func serveServerHTTPS(proxy *httputil.ReverseProxy) {
+	server := mx{}
+	mux = make(map[string]func(http.ResponseWriter, *http.Request))
+	mux["/"] = logHttp
+
+	s := &http.Server{
+		Addr:    ":9001",
+		Handler: server,
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS10,
+			MaxVersion:         tls.VersionTLS10,
+		},
+	}
+	log.Fatal(s.ListenAndServe())
+
+}
+
+func (m mx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if h, ok := mux[r.URL.String()]; ok {
+		println("match")
+		h(w, r)
+		return
+	}
+	fmt.Printf("My server: %v\n", r.URL.String())
+	fmt.Printf("mux.ServeHTTP req=%# v\n\n\n", pretty.Formatter(r))
 }
