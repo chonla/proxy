@@ -6,12 +6,10 @@ package main
 import (
 	"bufio"
 	"bytes"
-	// "crypto/rand"
 	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
-	// "io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -20,7 +18,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	// "strconv"
 	"strings"
 	"syscall"
 
@@ -146,60 +143,6 @@ func recordResponse(row Recoder, resp *http.Response) {
 	data.List[row.Name] = row
 }
 
-// func servHTTPS() {
-// 	//start https proxy
-// 	println("run proxy https")
-// 	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
-// 	if err != nil {
-// 		log.Fatalf("server: loadkeys: %s", err)
-// 	}
-// 	config := tls.Config{
-// 		Certificates:       []tls.Certificate{cert},
-// 		InsecureSkipVerify: true,
-// 		MinVersion:         tls.VersionTLS10,
-// 		MaxVersion:         tls.VersionTLS10,
-// 	}
-// 	config.Rand = rand.Reader
-// 	service := ":8000"
-// 	listener, err := tls.Listen("tcp", service, &config)
-// 	if err != nil {
-// 		log.Fatalf("server: listen: %s", err)
-// 	}
-// 	fatal(http.Serve(listener, nil))
-// 	// fatal(http.ListenAndServeTLS("localhost:8000", "cert.pem", "key.pem", nil))
-
-// }
-
-// func serveTCP() {
-// 	println("run proxy tcp 8000")
-// 	l, err := net.Listen("tcp", ":8000")
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	defer l.Close()
-// 	for {
-// 		// Wait for a connection.
-// 		conn, err := l.Accept()
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 		// Handle the connection in a new goroutine.
-// 		// The loop then returns to accepting, so that
-// 		// multiple connections may be served concurrently.
-// 		go func(c net.Conn) {
-// 			// Echo all incoming data.
-
-// 			fmt.Printf("c=%# v", c)
-
-// 			println("hello")
-// 			io.Copy(c, c)
-
-// 			// Shut down the connection.
-// 			c.Close()
-// 		}(conn)
-// 	}
-// }
-
 func fatal(err error) {
 	if err != nil {
 		log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -307,9 +250,6 @@ func main() {
 		DisableKeepAlives:  true,
 	}}
 
-	// go serveTCP()
-	// http.Handle("/", proxy)
-
 	go serveServerHTTPS(proxy)
 
 	//start proxy
@@ -317,9 +257,7 @@ func main() {
 	log.Fatal(http.ListenAndServe("localhost:"+arg.ProxyPort, nil))
 }
 
-type ServerHTTPS struct {
-	// http.HandleFunc
-}
+type ServerHTTPS struct{}
 
 func (s ServerHTTPS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("https req=%# v\n\n\n", pretty.Formatter(r))
@@ -330,9 +268,7 @@ func logHttp(w http.ResponseWriter, r *http.Request) {
 	//fmt.Printf("log http req=%# v\n\n\n", pretty.Formatter(r))
 }
 
-type mx struct {
-	// http.ServeMux
-}
+type mx struct{}
 
 var mux map[string]func(http.ResponseWriter, *http.Request)
 
@@ -351,7 +287,6 @@ func serveServerHTTPS(proxy *httputil.ReverseProxy) {
 		},
 	}
 	log.Fatal(s.ListenAndServe())
-
 }
 
 func (m mx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
