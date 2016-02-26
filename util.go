@@ -24,7 +24,9 @@ func captureExitProgram() {
 	signal.Notify(c, syscall.SIGTERM)
 	go func() {
 		<-c
-		writeStub()
+		if arg.Mode == "Record" {
+			writeStub()
+		}
 		println()
 		println("end proxy...")
 		os.Exit(1)
