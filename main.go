@@ -6,8 +6,7 @@ var data Stub
 func main() {
 	captureExitProgram()
 	println("starting proxy...")
-	data.List = make(map[string]Recoder)
 	parseArg()
-	readFromStub()
+	data.ReadFromStub()
 	startProxy()
 }
