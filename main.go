@@ -14,7 +14,6 @@ import (
 
 var arg Arg
 var data Stub
-var _ http.RoundTripper = &transport{}
 
 func main() {
 	captureExitProgram()
@@ -31,7 +30,7 @@ func main() {
 
 	//assign proxy
 	proxy := httputil.NewSingleHostReverseProxy(target)
-	proxy.Transport = &transport{&http.Transport{
+	proxy.Transport = &Transport{&http.Transport{
 		Dial: (&net.Dialer{}).Dial,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -42,9 +41,10 @@ func main() {
 		DisableKeepAlives:  true,
 	}}
 
-	go serveServerHTTPS(proxy)
+	go ServeTCP()
 
 	//start proxy
 	println("run proxy http")
+	http.Handle("/", proxy)
 	log.Fatal(http.ListenAndServe("localhost:"+arg.ProxyPort, nil))
 }
