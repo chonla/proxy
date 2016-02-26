@@ -21,9 +21,9 @@ func main() {
 	parseArg()
 	data.List = make(map[string]Recoder)
 
-	if arg.Mode == "Replay" {
-		readFromStub()
-	}
+	// if arg.Mode == "Replay" {
+	readFromStub()
+	// }
 
 	target, err := url.Parse(arg.Endpoint)
 	fatal(err)
@@ -41,7 +41,7 @@ func main() {
 		DisableKeepAlives:  true,
 	}}
 
-	go ServeTCP()
+	// go ServeTCP()
 
 	//start proxy
 	println("run proxy http")

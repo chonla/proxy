@@ -57,7 +57,11 @@ func writeStub() {
 
 func readFromStub() {
 	b, err := ioutil.ReadFile(arg.StubFileName)
-	fatal(err)
+	if err != nil {
+		println("missing stub file", arg.StubFileName)
+		return
+	}
+	// fatal(err)
 
 	err = json.Unmarshal(b, &data)
 	fatal(err)
