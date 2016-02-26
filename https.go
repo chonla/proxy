@@ -1,8 +1,16 @@
 package main
 
+// http://stackoverflow.com/questions/31535569/golang-how-to-read-response-body-of-reverseproxy
+// curl -verbose -X POST -d @ReadNewCardWS.txt http://athena13:9582/ReadNewCardWS
+
 import (
+	"crypto/tls"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 
 	"github.com/kr/pretty"
 )
@@ -23,6 +31,31 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	}
 
 	return resp, nil
+}
+
+func startProxy() {
+	//assign proxy
+	target, err := url.Parse(arg.Endpoint)
+	fatal(err)
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy.Transport = &Transport{&http.Transport{
+		Dial: (&net.Dialer{}).Dial,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS10,
+			MaxVersion:         tls.VersionTLS10,
+		},
+		DisableCompression: false,
+		DisableKeepAlives:  true,
+	}}
+
+	// go ServeTCP()
+
+	//start proxy
+	println("run proxy http")
+	http.Handle("/", proxy)
+	log.Fatal(http.ListenAndServe("localhost:"+arg.ProxyPort, nil))
+
 }
 
 // func servHTTPS() {
