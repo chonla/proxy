@@ -43,11 +43,11 @@ func recordResponse(row Recoder, resp *http.Response) {
 	data.List[row.Name] = row
 }
 
-func writeStub() {
+func (s Stub) WriteStub() {
 	if arg.Mode == "Record" {
 		println()
 		println("write stub...")
-		b, err := json.Marshal(data)
+		b, err := json.Marshal(s)
 		fatal(err)
 
 		err = ioutil.WriteFile(arg.StubFileName, b, 0666)
@@ -57,16 +57,13 @@ func writeStub() {
 
 func (s Stub) ReadFromStub() {
 	s.List = make(map[string]Recoder)
-	// data.List = make(map[string]Recoder)
 	b, err := ioutil.ReadFile(arg.StubFileName)
 	if err != nil {
 		println("missing stub file", arg.StubFileName)
 		return
 	}
-	// fatal(err)
 
 	err = json.Unmarshal(b, &s)
-	// err = json.Unmarshal(b, &data)
 	fatal(err)
 }
 
