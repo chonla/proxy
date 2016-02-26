@@ -67,7 +67,7 @@ func (s Stub) ReadFromStub() {
 	fatal(err)
 }
 
-func getResponseFromStub(req *http.Request) *http.Response {
+func (s Stub) FindInCache(req *http.Request) *http.Response {
 	name := req.Method + "|" + req.RequestURI
 
 	fmt.Printf("name=%s\n", name)
@@ -81,3 +81,18 @@ func getResponseFromStub(req *http.Request) *http.Response {
 	}
 	return nil
 }
+
+// func getResponseFromStub(req *http.Request) *http.Response {
+// 	name := req.Method + "|" + req.RequestURI
+
+// 	fmt.Printf("name=%s\n", name)
+// 	if row, found := data.List[name]; found {
+// 		// b := row.Response.Body
+// 		b := []byte(row.Response.Body)
+// 		reader := bufio.NewReader(bytes.NewReader(b))
+// 		r, err := http.ReadResponse(reader, req)
+// 		fatal(err)
+// 		return r
+// 	}
+// 	return nil
+// }

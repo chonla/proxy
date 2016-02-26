@@ -32,10 +32,12 @@ type Outbound struct {
 }
 
 func (r Recoder) getFromCache(t *Transport) (*http.Response, error) {
-	var cache *http.Response
-	if arg.Mode == "Replay" {
-		cache = getResponseFromStub(r.req)
-	}
+	// var cache *http.Response
+	// if arg.Mode == "Replay" {
+	// 	cache = getResponseFromStub(r.req)
+	// }
+
+	cache := data.FindInCache(r.req)
 
 	if cache != nil {
 		fmt.Printf("cache hit=%#v\n", pretty.Formatter(cache))
