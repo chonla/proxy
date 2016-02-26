@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/kr/pretty"
+	// "github.com/kr/pretty"
 )
 
 type Recoder struct {
@@ -32,20 +32,18 @@ type Outbound struct {
 }
 
 func (r Recoder) getFromCache(t *Transport) (*http.Response, error) {
-	// var cache *http.Response
-	// if arg.Mode == "Replay" {
-	// 	cache = getResponseFromStub(r.req)
-	// }
-
+	println()
 	cache := data.FindInCache(r.req)
-
 	if cache != nil {
-		fmt.Printf("cache hit=%#v\n", pretty.Formatter(cache))
+		fmt.Printf("CACHE: hit current cache %v record\n", len(data.List))
 		return cache, nil
 	}
-	println("cache miss, call http")
-	resp, err := t.RoundTripper.RoundTrip(r.req)
-	fmt.Printf("err=%# v, resp=%# v\n\n\n", err, pretty.Formatter(resp))
-	return resp, err
+	fmt.Printf("CACHE: miss current cache %v record, call http\n", len(data.List))
 
+	resp, err := t.RoundTripper.RoundTrip(r.req)
+	if err == nil {
+		recordResponse(r, resp)
+	}
+
+	return resp, err
 }

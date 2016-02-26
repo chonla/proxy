@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+
+	// "github.com/kr/pretty"
 )
 
 type Stub struct {
@@ -28,7 +30,6 @@ func recordRequest(req *http.Request) Recoder {
 			Body: string(iBody),
 		},
 	}
-
 }
 
 func recordResponse(row Recoder, resp *http.Response) {
@@ -40,7 +41,15 @@ func recordResponse(row Recoder, resp *http.Response) {
 	// row.Response.Body = oBody
 	row.Response.Body = string(oBody)
 	row.Name = row.req.Method + "|" + row.req.RequestURI
+
+	if data.List == nil {
+		println("make map2")
+		data.List = make(map[string]Recoder)
+	}
+	// fmt.Printf("before record data=%# v\n\n\n", pretty.Formatter(data.List))
+
 	data.List[row.Name] = row
+	fmt.Printf("CACHE: added current cache %v record\n", len(data.List))
 }
 
 func (s Stub) WriteStub() {
@@ -56,7 +65,6 @@ func (s Stub) WriteStub() {
 }
 
 func (s Stub) ReadFromStub() {
-	s.List = make(map[string]Recoder)
 	b, err := ioutil.ReadFile(arg.StubFileName)
 	if err != nil {
 		println("missing stub file", arg.StubFileName)
@@ -64,14 +72,13 @@ func (s Stub) ReadFromStub() {
 	}
 
 	err = json.Unmarshal(b, &s)
-	fatal(err)
+	fmt.Printf("CACHE: loaded current cache %v record\n\n", len(s.List))
 }
 
 func (s Stub) FindInCache(req *http.Request) *http.Response {
 	name := req.Method + "|" + req.RequestURI
-
 	fmt.Printf("name=%s\n", name)
-	if row, found := data.List[name]; found {
+	if row, found := s.List[name]; found {
 		// b := row.Response.Body
 		b := []byte(row.Response.Body)
 		reader := bufio.NewReader(bytes.NewReader(b))
@@ -81,18 +88,3 @@ func (s Stub) FindInCache(req *http.Request) *http.Response {
 	}
 	return nil
 }
-
-// func getResponseFromStub(req *http.Request) *http.Response {
-// 	name := req.Method + "|" + req.RequestURI
-
-// 	fmt.Printf("name=%s\n", name)
-// 	if row, found := data.List[name]; found {
-// 		// b := row.Response.Body
-// 		b := []byte(row.Response.Body)
-// 		reader := bufio.NewReader(bytes.NewReader(b))
-// 		r, err := http.ReadResponse(reader, req)
-// 		fatal(err)
-// 		return r
-// 	}
-// 	return nil
-// }

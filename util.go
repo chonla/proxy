@@ -38,8 +38,8 @@ func captureExitProgram() {
 	signal.Notify(c, syscall.SIGTERM)
 	go func() {
 		<-c
-		// writeStub()
 		data.WriteStub()
+
 		println()
 		println("end proxy...")
 		os.Exit(1)

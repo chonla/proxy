@@ -5,14 +5,12 @@ package main
 
 import (
 	"crypto/tls"
-	"fmt"
+	// "fmt"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-
-	"github.com/kr/pretty"
 )
 
 var _ http.RoundTripper = &Transport{}
@@ -22,19 +20,13 @@ type Transport struct {
 }
 
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	fmt.Printf("req=%# v\n\n\n", pretty.Formatter(req))
 	row := recordRequest(req)
 	unproxyURL(req)
 	resp, err = row.getFromCache(t)
-	if err != nil {
-		recordResponse(row, resp)
-	}
-
-	return resp, nil
+	return
 }
 
 func startProxy() {
-	//assign proxy
 	target, err := url.Parse(arg.Endpoint)
 	fatal(err)
 
