@@ -19,9 +19,19 @@ func unproxyURL(req *http.Request) {
 	if req.RequestURI == "http://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm" {
 		strURL = "https://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm"
 	}
+
+	if inHostList(arg.HttpsList, req.Host) {
+
+	}
+
 	target, err := url.Parse(strURL)
 	fatal(err)
 	req.URL = target
+}
+
+func inHostList(hostList, hostname string) bool {
+	index := strings.Index(hostList, hostname)
+	return (index >= 0)
 }
 
 func fatal(err error) {
