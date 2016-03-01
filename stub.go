@@ -42,10 +42,10 @@ func recordResponse(row Recoder, resp *http.Response) {
 	row.Response.Body = string(oBody)
 	row.Name = row.req.Method + "|" + row.req.RequestURI
 
-	if data.List == nil {
-		println("make map2")
-		data.List = make(map[string]Recoder)
-	}
+	// if data.List == nil {
+	// 	println("make map2")
+	// 	data.List = make(map[string]Recoder)
+	// }
 	// fmt.Printf("before record data=%# v\n\n\n", pretty.Formatter(data.List))
 
 	data.List[row.Name] = row
@@ -65,6 +65,7 @@ func (s Stub) WriteStub() {
 }
 
 func (s Stub) ReadFromStub() {
+	s.List = make(map[string]Recoder)
 	b, err := ioutil.ReadFile(arg.StubFileName)
 	if err != nil {
 		println("missing stub file", arg.StubFileName)
