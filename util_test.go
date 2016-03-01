@@ -21,3 +21,10 @@ func TestFoundInHostList(t *testing.T) {
 		}
 	}
 }
+
+func TestChangeHostToHttps(t *testing.T) {
+	result := changeHostToHttps("http://www.google.com:9000")
+	if result != "https://www.google.com:9000" {
+		t.Error("expect url https but got ", result)
+	}
+}

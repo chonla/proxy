@@ -15,13 +15,8 @@ func unproxyURL(req *http.Request) {
 	fmt.Printf("req.RequestURI=%v\n", req.RequestURI)
 	strURL := req.RequestURI
 
-	// TODO: add logic convert http to https
-	if req.RequestURI == "http://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm" {
-		strURL = "https://gliese1dtac-blltxsb.tac.co.th:7844/QueryCDR/CustIntrMgmt/BillEnquiry/SVCBEQryUsageSumm/v2_0/SVCBEQryUsageSumm"
-	}
-
 	if inHostList(arg.HttpsList, req.Host) {
-
+		strURL = changeHostToHttps(req.RequestURI)
 	}
 
 	target, err := url.Parse(strURL)
@@ -32,6 +27,10 @@ func unproxyURL(req *http.Request) {
 func inHostList(hostList, hostname string) bool {
 	index := strings.Index(hostList, hostname)
 	return (index >= 0)
+}
+
+func changeHostToHttps(endpoint string) string {
+	return strings.Replace(endpoint, "http://", "https://", -1)
 }
 
 func fatal(err error) {
