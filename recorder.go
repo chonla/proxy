@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 
 	// "github.com/kr/pretty"
 )
@@ -20,15 +21,41 @@ type Inbound struct {
 	Host   string
 	Path   string
 	Method string
-	// Body   []byte
-	Body string
+	Body   []byte
 }
 
 type Outbound struct {
 	Status     string
 	StatusCode int
-	// Body   []byte
-	Body string
+	Body       []byte
+}
+
+func recordRequest(req *http.Request) Recoder {
+	iBody, err := httputil.DumpRequest(req, true)
+	fatal(err)
+
+	return Recoder{
+		req: req,
+		Request: Inbound{
+			Host:   req.Host,
+			Path:   req.URL.Path,
+			Method: req.Method,
+			Body:   iBody,
+		},
+	}
+}
+
+func recordResponse(row Recoder, resp *http.Response) {
+	oBody, err := httputil.DumpResponse(resp, true)
+	fatal(err)
+	row.resp = resp
+	row.Response.Status = resp.Status
+	row.Response.StatusCode = resp.StatusCode
+	row.Response.Body = oBody
+	row.Name = row.req.Method + "|" + row.req.RequestURI
+
+	data.List[row.Name] = row
+	fmt.Printf("CACHE: added current cache %v record\n", len(data.List))
 }
 
 func (r Recoder) getFromCache(t *Transport) (*http.Response, error) {
