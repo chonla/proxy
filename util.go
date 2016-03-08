@@ -16,6 +16,7 @@ func unproxyURL(req *http.Request) {
 	strURL := req.RequestURI
 
 	if inHostList(arg.HttpsList, req.Host) {
+		fmt.Printf("changeHostToHttps=%v\n", strURL)
 		strURL = changeHostToHttps(req.RequestURI)
 	}
 
