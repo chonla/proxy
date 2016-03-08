@@ -17,17 +17,19 @@ type Recoder struct {
 }
 
 type Inbound struct {
-	URI    string
-	Host   string
-	Path   string
-	Method string
-	Body   []byte
+	URI      string
+	Host     string
+	Path     string
+	Method   string
+	Body     []byte
+	BodyText string
 }
 
 type Outbound struct {
 	Status     string
 	StatusCode int
 	Body       []byte
+	BodyText   string
 }
 
 func recordRequest(req *http.Request) Recoder {
@@ -37,10 +39,11 @@ func recordRequest(req *http.Request) Recoder {
 	return Recoder{
 		req: req,
 		Request: Inbound{
-			Host:   req.Host,
-			Path:   req.URL.Path,
-			Method: req.Method,
-			Body:   iBody,
+			Host:     req.Host,
+			Path:     req.URL.Path,
+			Method:   req.Method,
+			Body:     iBody,
+			BodyText: string(iBody),
 		},
 	}
 }
@@ -52,6 +55,7 @@ func recordResponse(row Recoder, resp *http.Response) {
 	row.Response.Status = resp.Status
 	row.Response.StatusCode = resp.StatusCode
 	row.Response.Body = oBody
+	row.Response.BodyText = string(oBody)
 	row.Name = row.req.Method + "|" + row.req.RequestURI
 
 	data.List[row.Name] = row
