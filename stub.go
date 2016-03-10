@@ -43,7 +43,6 @@ func ReadFromStub() {
 
 func (s Stub) FindInCache(req *http.Request) *http.Response {
 	name := req.Method + "|" + req.RequestURI
-	// fmt.Printf("name=%s \n", name)
 	if row, found := s.List[name]; found {
 		b := []byte(row.Response.Body)
 		reader := bufio.NewReader(bytes.NewReader(b))

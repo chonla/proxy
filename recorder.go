@@ -32,7 +32,7 @@ type Outbound struct {
 	BodyText   string `json:"-"`
 }
 
-func recordRequest(req *http.Request) Recoder {
+func newRecoder(req *http.Request) Recoder {
 	iBody, err := httputil.DumpRequest(req, true)
 	fatal(err)
 
@@ -50,20 +50,6 @@ func recordRequest(req *http.Request) Recoder {
 	}
 }
 
-func recordResponse(row Recoder, resp *http.Response) {
-	oBody, err := httputil.DumpResponse(resp, true)
-	fatal(err)
-	row.resp = resp
-	row.Response.Status = resp.Status
-	row.Response.StatusCode = resp.StatusCode
-	row.Response.Body = oBody
-	row.Response.BodyText = string(oBody)
-	row.Name = row.req.Method + "|" + row.req.RequestURI
-
-	data.List[row.Name] = row
-	fmt.Printf("CACHE: added current cache %v record\n", len(data.List))
-}
-
 func (r Recoder) getFromCache(t *Transport) (*http.Response, error) {
 	println()
 	cache := data.FindInCache(r.req)
@@ -75,8 +61,22 @@ func (r Recoder) getFromCache(t *Transport) (*http.Response, error) {
 
 	resp, err := t.RoundTripper.RoundTrip(r.req)
 	if err == nil {
-		recordResponse(r, resp)
+		addToCache(r, resp)
 	}
 
 	return resp, err
+}
+
+func addToCache(row Recoder, resp *http.Response) {
+	oBody, err := httputil.DumpResponse(resp, true)
+	fatal(err)
+	row.resp = resp
+	row.Response.Status = resp.Status
+	row.Response.StatusCode = resp.StatusCode
+	row.Response.Body = oBody
+	row.Response.BodyText = string(oBody)
+	row.Name = row.req.Method + "|" + row.req.RequestURI
+
+	data.List[row.Name] = row
+	fmt.Printf("CACHE: added current cache %v record\n", len(data.List))
 }
