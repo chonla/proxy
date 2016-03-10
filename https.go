@@ -21,7 +21,6 @@ type Transport struct {
 
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	row := newRecoder(req)
-	unproxyURL(req)
 	resp, err = row.getFromCache(t)
 	return
 }

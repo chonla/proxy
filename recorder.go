@@ -38,6 +38,7 @@ func newRecoder(req *http.Request) Recoder {
 
 	fmt.Printf("\n\nPOST BODY: %v \n\n", string(iBody))
 
+	unproxyURL(req)
 	return Recoder{
 		req: req,
 		Request: Inbound{
