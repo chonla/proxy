@@ -43,7 +43,7 @@ func startProxy() {
 	}}
 
 	//start proxy
-	println("run proxy http")
+	println("runing proxy http...")
 	http.Handle("/", proxy)
 	log.Fatal(http.ListenAndServe("localhost:"+arg.ProxyPort, nil))
 }
