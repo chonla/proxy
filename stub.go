@@ -18,7 +18,7 @@ type Stub struct {
 func (s Stub) WriteStub() {
 	if arg.Mode == "Record" {
 		println()
-		println("write stub...")
+		println("write stub file ...", arg.StubFileName)
 		b, err := json.Marshal(s)
 		fatal(err)
 
@@ -41,7 +41,7 @@ func ReadFromStub() {
 
 func (s Stub) FindInCache(req *http.Request) *http.Response {
 	name := req.Method + "|" + req.RequestURI
-	fmt.Printf("name=%s \n", name)
+	// fmt.Printf("name=%s \n", name)
 	if row, found := s.List[name]; found {
 		b := []byte(row.Response.Body)
 		reader := bufio.NewReader(bytes.NewReader(b))

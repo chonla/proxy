@@ -16,6 +16,7 @@ type Arg struct {
 }
 
 type Condition struct {
+	Url      string
 	KeyField string
 }
 

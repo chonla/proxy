@@ -9,7 +9,7 @@ import (
 )
 
 type Recoder struct {
-	Name     string
+	Name     string `json:"-"`
 	Request  Inbound
 	Response Outbound
 	req      *http.Request  `json:"-"`
@@ -17,19 +17,19 @@ type Recoder struct {
 }
 
 type Inbound struct {
-	URI      string
+	URI      string `json:"-"`
 	Host     string
 	Path     string
 	Method   string
 	Body     []byte
-	BodyText string
+	BodyText string `json:"-"`
 }
 
 type Outbound struct {
 	Status     string
 	StatusCode int
 	Body       []byte
-	BodyText   string
+	BodyText   string `json:"-"`
 }
 
 func recordRequest(req *http.Request) Recoder {
