@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	// "github.com/kr/pretty"
 )
 
 type Stub struct {
@@ -40,18 +38,6 @@ func ReadFromStub() {
 	err = json.Unmarshal(b, &data)
 	fmt.Printf("CACHE: loaded current cache %v record\n\n", len(data.List))
 }
-
-// func (s Stub) FindInCache(req *http.Request) *http.Response {
-// 	name := generateKey(req)
-// 	if row, found := s.List[name]; found {
-// 		b := []byte(row.Response.Body)
-// 		reader := bufio.NewReader(bytes.NewReader(b))
-// 		r, err := http.ReadResponse(reader, req)
-// 		fatal(err)
-// 		return r
-// 	}
-// 	return nil
-// }
 
 func (s Stub) FindInCache(r Recoder) *http.Response {
 	name := generateKey(r.Request)

@@ -63,20 +63,10 @@ func getValueByKey(key string, data string) string {
 		return r == '<' || r == '>'
 	})
 
-	// fmt.Printf("list[%v]=% v\n", len(list), pretty.Formatter(list))
 	for i, s := range list {
-		// if s == key {
-		// 	if len(list) > i {
-		// 		if list[i+1] != "/"+key {
-		// 			return list[i+1]
-		// 		}
-		// 	}
-		// }
-
 		if s == key && len(list) > i && list[i+1] != "/"+key {
 			return list[i+1]
 		}
-
 	}
 	return ""
 }
@@ -84,10 +74,6 @@ func getValueByKey(key string, data string) string {
 func generateKey(req Inbound) string {
 	conditionField := getConditionField(req.Host+req.Path, arg.IncludeList)
 	conditionValue := getConditionValue(conditionField, byteToStr(req.Body))
-
-	// fmt.Printf("condition field=%v\n", conditionField)
-	// fmt.Printf("condition value=%v\n", conditionValue)
-	// return req.Method + "|" + req.RequestURI + "|" + conditionValue
 	return req.Method + "|" + req.Host + req.Path + "|" + conditionValue
 }
 
@@ -103,13 +89,11 @@ func getConditionValue(key, data string) string {
 
 	list := strings.Split(key, ",")
 	for _, value := range list {
-
 		if v := getValueByKey(value, data); v != "" {
 			result = append(result, v)
 		}
 	}
 
-	// fmt.Printf("result[%v]=% v\n", len(result), pretty.Formatter(result))
 	return strings.Join(result, "|")
 }
 

@@ -36,8 +36,6 @@ func newRecoder(req *http.Request) Recoder {
 	iBody, err := httputil.DumpRequest(req, true)
 	fatal(err)
 
-	// fmt.Printf("\n\nPOST BODY: %v \n\n", byteToStr(iBody))
-
 	unproxyURL(req)
 	return Recoder{
 		req: req,
@@ -52,8 +50,6 @@ func newRecoder(req *http.Request) Recoder {
 }
 
 func (r Recoder) getFromCache(t *Transport) (*http.Response, error) {
-	println()
-	// cache := data.FindInCache(r.req)
 	cache := data.FindInCache(r)
 	if cache != nil {
 		fmt.Printf("CACHE: hit current cache %v record\n", len(data.List))

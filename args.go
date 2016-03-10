@@ -28,7 +28,6 @@ func parseArg() {
 	flag.StringVar(&arg.Mode, "mode", "Record", "proxy running mode [Record/Replay], default is Record")
 	flag.Parse()
 
-	// WriteConfig()
 	println("===========================================")
 	println(arg.Mode, "Mode")
 	println("===========================================")
@@ -49,17 +48,3 @@ func ReadConfig() {
 	err = json.Unmarshal(b, &arg)
 	fatal(err)
 }
-
-// func WriteConfig() {
-// 	filename := "proxy.json"
-// 	println("write config file", filename)
-// 	arg.HttpsList = append(arg.HttpsList, "gliese1dtac-blqrysb.tac.co.th:7834")
-// 	arg.HttpsList = append(arg.HttpsList, "gliese1-blqrysb.tac.co.th:7832")
-
-// 	b, err := json.Marshal(arg)
-// 	fatal(err)
-
-// 	err = ioutil.WriteFile(filename, b, 0666)
-// 	fatal(err)
-
-// }
