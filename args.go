@@ -9,8 +9,7 @@ import (
 	"github.com/kr/pretty"
 )
 
-type Url string
-type KeyField string
+type Condition map[string]string
 
 type Arg struct {
 	Endpoint  string `json:"-"`
@@ -19,7 +18,7 @@ type Arg struct {
 
 	StubFileName string
 	HttpsList    []string
-	IncludeList  map[Url]KeyField
+	IncludeList  Condition
 }
 
 var arg Arg
