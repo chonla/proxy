@@ -1,10 +1,11 @@
 {
 	"StubFileName": "stub.json",
-	"HttpsList": "gliese1dtac-blqrysb.tac.co.th:7834,gliese1-blqrysb.tac.co.th:7832",
+	"HttpsList": [
+		"gliese1dtac-blqrysb.tac.co.th:7834",
+		"gliese1-blqrysb.tac.co.th:7832"
+	],
 	"IncludeList": {
-		"A": {
-			"Url": "A",
-			"KeyField": "ABC"
-		}
+		"http://athena13.tac.co.th:9582/ReadInvcAlrtMtdWS": "<USER_CODE>",
+		"http://10.89.111.46:7882/services/BB4CCInterfaceService": "<ccin:SubscriberNo>"
 	}
 }
