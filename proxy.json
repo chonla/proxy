@@ -5,7 +5,7 @@
 		"gliese1-blqrysb.tac.co.th:7832"
 	],
 	"IncludeList": {
-		"http://athena13.tac.co.th:9582/ReadInvcAlrtMtdWS": "<USER_CODE>",
-		"http://10.89.111.46:7882/services/BB4CCInterfaceService": "<ccin:SubscriberNo>"
+		"athena13.tac.co.th:9582/ReadInvcAlrtMtdWS/": "USER_CODE",
+		"10.89.111.46:7882/services/BB4CCInterfaceService/": "ccin:SubscriberNo"
 	}
 }

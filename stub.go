@@ -41,13 +41,24 @@ func ReadFromStub() {
 	fmt.Printf("CACHE: loaded current cache %v record\n\n", len(data.List))
 }
 
-func (s Stub) FindInCache(req *http.Request) *http.Response {
-	// name := req.Method + "|" + req.RequestURI
-	name := generateKey(req)
+// func (s Stub) FindInCache(req *http.Request) *http.Response {
+// 	name := generateKey(req)
+// 	if row, found := s.List[name]; found {
+// 		b := []byte(row.Response.Body)
+// 		reader := bufio.NewReader(bytes.NewReader(b))
+// 		r, err := http.ReadResponse(reader, req)
+// 		fatal(err)
+// 		return r
+// 	}
+// 	return nil
+// }
+
+func (s Stub) FindInCache(r Recoder) *http.Response {
+	name := generateKey(r.Request)
 	if row, found := s.List[name]; found {
 		b := []byte(row.Response.Body)
 		reader := bufio.NewReader(bytes.NewReader(b))
-		r, err := http.ReadResponse(reader, req)
+		r, err := http.ReadResponse(reader, r.req)
 		fatal(err)
 		return r
 	}

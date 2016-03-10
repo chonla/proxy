@@ -55,3 +55,33 @@ func TestGetValueFromRAW(t *testing.T) {
 		t.Error("expect xxxxxxx but got", result)
 	}
 }
+
+func TestGetConditionField(t *testing.T) {
+	list := Condition{}
+	list["AAA"] = "AAA"
+	list["BBB"] = "BBB"
+
+	result := getConditionField("AAA", list)
+
+	if result != "AAA" {
+		t.Error("expect AAA but got", result)
+	}
+
+	result = getConditionField("XXX", list)
+
+	if result != "" {
+		t.Error("expect <blank> but got", result)
+	}
+}
+
+func TestGetConditionValue(t *testing.T) {
+	result := getConditionValue("A", "<A>xxx</A>")
+	if result != "xxx" {
+		t.Error("expect xxx but got", result)
+	}
+
+	result = getConditionValue("A,C", "<A>xxx</A><B>yyy</B><C>zzz</C>")
+	if result != "xxx|zzz" {
+		t.Error("expect xxx|zzz but got", result)
+	}
+}

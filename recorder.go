@@ -22,21 +22,21 @@ type Inbound struct {
 	Path     string
 	Method   string
 	Body     []byte
-	BodyText string `json:"-"`
+	BodyText string
 }
 
 type Outbound struct {
 	Status     string
 	StatusCode int
 	Body       []byte
-	BodyText   string `json:"-"`
+	BodyText   string
 }
 
 func newRecoder(req *http.Request) Recoder {
 	iBody, err := httputil.DumpRequest(req, true)
 	fatal(err)
 
-	fmt.Printf("\n\nPOST BODY: %v \n\n", string(iBody))
+	// fmt.Printf("\n\nPOST BODY: %v \n\n", byteToStr(iBody))
 
 	unproxyURL(req)
 	return Recoder{
@@ -46,14 +46,15 @@ func newRecoder(req *http.Request) Recoder {
 			Path:     req.URL.Path,
 			Method:   req.Method,
 			Body:     iBody,
-			BodyText: string(iBody),
+			BodyText: byteToStr(iBody),
 		},
 	}
 }
 
 func (r Recoder) getFromCache(t *Transport) (*http.Response, error) {
 	println()
-	cache := data.FindInCache(r.req)
+	// cache := data.FindInCache(r.req)
+	cache := data.FindInCache(r)
 	if cache != nil {
 		fmt.Printf("CACHE: hit current cache %v record\n", len(data.List))
 		return cache, nil
@@ -75,9 +76,8 @@ func addToCache(row Recoder, resp *http.Response) {
 	row.Response.Status = resp.Status
 	row.Response.StatusCode = resp.StatusCode
 	row.Response.Body = oBody
-	row.Response.BodyText = string(oBody)
-	// row.Name = row.req.Method + "|" + row.req.RequestURI
-	row.Name = generateKey(row.req)
+	row.Response.BodyText = byteToStr(oBody)
+	row.Name = generateKey(row.Request)
 
 	data.List[row.Name] = row
 	fmt.Printf("CACHE: added current cache %v record\n", len(data.List))

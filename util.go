@@ -68,13 +68,34 @@ func getValueByKey(key string, data string) string {
 	return ""
 }
 
-func generateKey(req *http.Request) string {
-	return req.Method + "|" + req.RequestURI
+func generateKey(req Inbound) string {
+	conditionField := getConditionField(req.Host+req.Path, arg.IncludeList)
+	conditionValue := getConditionValue(conditionField, byteToStr(req.Body))
+
+	// fmt.Printf("condition field=%v\n", conditionField)
+	// fmt.Printf("condition value=%v\n", conditionValue)
+	// return req.Method + "|" + req.RequestURI + "|" + conditionValue
+	return req.Method + "|" + req.Host + req.Path + "|" + conditionValue
 }
 
-// func getConditionField(endpoint string, fieldList map[Url]KeyField) string {
-// 	if list, found := fieldList[Url(endpoint)]; found {
-// 		return string(list)
-// 	}
-// 	return ""
-// }
+func getConditionField(endpoint string, fieldList Condition) string {
+	if list, found := fieldList[endpoint]; found {
+		return list
+	}
+	return ""
+}
+
+func getConditionValue(key, data string) string {
+	var result []string
+
+	list := strings.Split(key, ",")
+	for _, value := range list {
+		result = append(result, getValueByKey(value, data))
+	}
+
+	return strings.Join(result, "|")
+}
+
+func byteToStr(data []byte) string {
+	return fmt.Sprintf("%s", data)
+}
