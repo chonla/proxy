@@ -24,13 +24,7 @@ type Arg struct {
 
 var arg Arg
 
-func loadArg() {
-	parseArg()
-}
-
 func parseArg() {
-	ReadConfig()
-
 	flag.StringVar(&arg.ProxyPort, "port", "9000", "proxy running on port. EX: 9000")
 	flag.StringVar(&arg.Mode, "mode", "Record", "proxy running mode [Record/Replay], default is Record")
 	flag.Parse()
