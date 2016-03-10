@@ -76,7 +76,8 @@ func addToCache(row Recoder, resp *http.Response) {
 	row.Response.StatusCode = resp.StatusCode
 	row.Response.Body = oBody
 	row.Response.BodyText = string(oBody)
-	row.Name = row.req.Method + "|" + row.req.RequestURI
+	// row.Name = row.req.Method + "|" + row.req.RequestURI
+	row.Name = generateKey(row.req)
 
 	data.List[row.Name] = row
 	fmt.Printf("CACHE: added current cache %v record\n", len(data.List))

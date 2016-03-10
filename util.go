@@ -67,3 +67,14 @@ func getValueByKey(key string, data string) string {
 	}
 	return ""
 }
+
+func generateKey(req *http.Request) string {
+	return req.Method + "|" + req.RequestURI
+}
+
+// func getConditionField(endpoint string, fieldList map[Url]KeyField) string {
+// 	if list, found := fieldList[Url(endpoint)]; found {
+// 		return string(list)
+// 	}
+// 	return ""
+// }
