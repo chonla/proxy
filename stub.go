@@ -15,6 +15,8 @@ type Stub struct {
 	List map[string]Recoder `json:"stub"`
 }
 
+var data Stub
+
 func (s Stub) WriteStub() {
 	if arg.Mode == "Record" {
 		println()

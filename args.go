@@ -12,13 +12,15 @@ type Arg struct {
 	StubFileName string
 	HttpsList    string
 
-	ConditionList map[string]Condition
+	IncludeList map[string]Condition
 }
 
 type Condition struct {
 	Url      string
 	KeyField string
 }
+
+var arg Arg
 
 func loadArg() {
 	parseArg()

@@ -36,6 +36,8 @@ func recordRequest(req *http.Request) Recoder {
 	iBody, err := httputil.DumpRequest(req, true)
 	fatal(err)
 
+	fmt.Printf("\n\nPOST BODY: %v \n\n", string(iBody))
+
 	return Recoder{
 		req: req,
 		Request: Inbound{
