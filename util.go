@@ -9,6 +9,8 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+
+	// "github.com/kr/pretty"
 )
 
 func unproxyURL(req *http.Request) {
@@ -60,10 +62,21 @@ func getValueByKey(key string, data string) string {
 	list := strings.FieldsFunc(data, func(r rune) bool {
 		return r == '<' || r == '>'
 	})
+
+	// fmt.Printf("list[%v]=% v\n", len(list), pretty.Formatter(list))
 	for i, s := range list {
-		if s == key {
+		// if s == key {
+		// 	if len(list) > i {
+		// 		if list[i+1] != "/"+key {
+		// 			return list[i+1]
+		// 		}
+		// 	}
+		// }
+
+		if s == key && len(list) > i && list[i+1] != "/"+key {
 			return list[i+1]
 		}
+
 	}
 	return ""
 }
@@ -90,9 +103,13 @@ func getConditionValue(key, data string) string {
 
 	list := strings.Split(key, ",")
 	for _, value := range list {
-		result = append(result, getValueByKey(value, data))
+
+		if v := getValueByKey(value, data); v != "" {
+			result = append(result, v)
+		}
 	}
 
+	// fmt.Printf("result[%v]=% v\n", len(result), pretty.Formatter(result))
 	return strings.Join(result, "|")
 }
 

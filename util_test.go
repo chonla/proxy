@@ -39,6 +39,23 @@ func TestGetValueByKeyName(t *testing.T) {
 	}
 }
 
+func TestGetValueByKeyNameBlank(t *testing.T) {
+	data := "<urn:SUBR_NUMB></urn:SUBR_NUMB>"
+
+	result := getValueByKey("urn:SUBR_NUMB", data)
+
+	if result != "" {
+		t.Error("expect <blank> but got", result)
+	}
+
+	result = getValueByKey("urn:CUST_NUMB", data)
+
+	if result != "" {
+		t.Error("expect <blank> but got", result)
+	}
+
+}
+
 func TestGetValueFromRAW(t *testing.T) {
 	data := `<bbm:QueryEstimatedChargeRequest>
            <!--Optional:-->
@@ -84,4 +101,10 @@ func TestGetConditionValue(t *testing.T) {
 	if result != "xxx|zzz" {
 		t.Error("expect xxx|zzz but got", result)
 	}
+
+	result = getConditionValue("A,M", "<A>xxx</A><B>yyy</B><C>zzz</C>")
+	if result != "xxx" {
+		t.Error("expect xxx but got", result)
+	}
+
 }
