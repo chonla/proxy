@@ -5,10 +5,12 @@
 		"gliese1-blqrysb.tac.co.th:7832"
 	],
 	"IncludeList": {
-		"athena13.tac.co.th:9582/ReadInvcAlrtMtdWS/": "USER_CODE",
 		"10.89.111.46:7882/services/BB4CCInterfaceService/": "ccin:SubscriberNo",
+		"10.89.90.93/contacthistory/tsc/_search": "",
+		"athena13.tac.co.th:9582/RdMCustSubSrchWS": "CS_CUST__CUST_NUMB,SUBR_NUMB",
 		"athena13.tac.co.th:9582/ReadCustSubInfoWS": "CUST_NUMB,SUBR_NUMB",
 		"athena13.tac.co.th:9582/ReadCustSubSrchWS": "SUBR_NUMB",
-		"athena13.tac.co.th:9582/RdMCustSubSrchWS": "CS_CUST__CUST_NUMB,SUBR_NUMB"
+		"athena13.tac.co.th:9582/ReadInvcAlrtMtdWS": "USER_CODE",
+		"gliese1-blqrysb.tac.co.th:7832/OnlineQuery/Service/CustIntrMgmt/BillEnquiry/SVCBEQryInvcPymt/v2_0/SVCBEQryInvcPymt": ""
 	}
 }

@@ -57,6 +57,8 @@ func (r Recoder) callService(t *Transport) (*http.Response, error) {
 			return cache, nil
 		}
 		fmt.Printf("CACHE_MISS : current cache %v record, call http url=%v\n", len(data.List), r.req.RequestURI)
+	} else {
+		fmt.Printf("BY_PASS    : current cache %v record, call http url=%v\n", len(data.List), r.req.RequestURI)
 	}
 
 	resp, err := t.RoundTripper.RoundTrip(r.req)
@@ -67,7 +69,7 @@ func (r Recoder) callService(t *Transport) (*http.Response, error) {
 }
 
 func addToCache(row Recoder, resp *http.Response) {
-	if foundIncludeList(r) && isRecordMode() {
+	if foundIncludeList(row) && isRecordMode() {
 		oBody, err := httputil.DumpResponse(resp, true)
 		fatal(err)
 		row.resp = resp

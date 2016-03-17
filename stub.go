@@ -44,9 +44,9 @@ func (s Stub) FindInCache(r Recoder) *http.Response {
 	if row, found := s.List[name]; found {
 		b := []byte(row.Response.Body)
 		reader := bufio.NewReader(bytes.NewReader(b))
-		r, err := http.ReadResponse(reader, r.req)
+		resp, err := http.ReadResponse(reader, r.req)
 		fatal(err)
-		return r
+		return resp
 	}
 	return nil
 }
