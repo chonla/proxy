@@ -86,17 +86,21 @@ func getConditionField(endpoint string, fieldList Condition) string {
 
 func getConditionValue(key, data string) string {
 	var result []string
-
 	list := strings.Split(key, ",")
 	for _, value := range list {
 		if v := getValueByKey(value, data); v != "" {
 			result = append(result, v)
 		}
 	}
-
 	return strings.Join(result, "|")
 }
 
 func byteToStr(data []byte) string {
 	return fmt.Sprintf("%s", data)
+}
+
+func foundIncludeList(r Recoder) bool {
+	endpoint := r.Request.Host + r.Request.Path
+	_, found := arg.IncludeList[endpoint]
+	return found
 }

@@ -50,15 +50,18 @@ func newRecoder(req *http.Request) Recoder {
 }
 
 func (r Recoder) callService(t *Transport) (*http.Response, error) {
-	cache := data.FindInCache(r)
-	if cache != nil {
-		fmt.Printf("CACHE_HIT  : current cache %v record, url=%v\n", len(data.List), r.req.RequestURI)
-		return cache, nil
+	if foundIncludeList(r) {
+		cache := data.FindInCache(r)
+		if cache != nil {
+			fmt.Printf("CACHE_HIT  : current cache %v record, url=%v\n", len(data.List), r.req.RequestURI)
+			return cache, nil
+		}
+		fmt.Printf("CACHE_MISS : current cache %v record, call http url=%v\n", len(data.List), r.req.RequestURI)
 	}
-	fmt.Printf("CACHE_MISS : current cache %v record, call http url=%v\n", len(data.List), r.req.RequestURI)
 
 	resp, err := t.RoundTripper.RoundTrip(r.req)
-	if err == nil {
+
+	if err == nil && foundIncludeList(r) {
 		addToCache(r, resp)
 	}
 

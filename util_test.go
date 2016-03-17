@@ -108,3 +108,28 @@ func TestGetConditionValue(t *testing.T) {
 	}
 
 }
+
+func TestFoundInIncludeList(t *testing.T) {
+	condition := make(map[string]string)
+	condition["www.google.com/starwars"] = "AAA"
+	condition["dtac.co.th/prepaid"] = "BBB"
+	var testcases = []struct {
+		name     string
+		expected bool
+		search   Recoder
+	}{
+		{"match", true, Recoder{Request: Inbound{Host: "www.google.com", Path: "/starwars"}}},
+		{"match", true, Recoder{Request: Inbound{Host: "dtac.co.th", Path: "/prepaid"}}},
+		{"not match", false, Recoder{Request: Inbound{Host: "bing.com", Path: "/reward"}}},
+		{"not match", false, Recoder{Request: Inbound{Host: "yahoo.com", Path: "/mail"}}},
+	}
+
+	original := arg.IncludeList
+	arg.IncludeList = condition
+	for _, testcase := range testcases {
+		if foundIncludeList(testcase.search) != testcase.expected {
+			t.Error("fail case ", testcase.name)
+		}
+	}
+	arg.IncludeList = original
+}
