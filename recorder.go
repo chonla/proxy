@@ -49,7 +49,7 @@ func newRecoder(req *http.Request) Recoder {
 	}
 }
 
-func (r Recoder) getFromCache(t *Transport) (*http.Response, error) {
+func (r Recoder) callService(t *Transport) (*http.Response, error) {
 	cache := data.FindInCache(r)
 	if cache != nil {
 		fmt.Printf("CACHE_HIT  : current cache %v record, url=%v\n", len(data.List), r.req.RequestURI)
