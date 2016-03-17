@@ -50,7 +50,7 @@ func newRecoder(req *http.Request) Recoder {
 }
 
 func (r Recoder) callService(t *Transport) (*http.Response, error) {
-	if foundIncludeList(r) {
+	if foundIncludeList(r) && isReplayMode() {
 		cache := data.FindInCache(r)
 		if cache != nil {
 			fmt.Printf("CACHE_HIT  : current cache %v record, url=%v\n", len(data.List), r.req.RequestURI)
@@ -60,24 +60,24 @@ func (r Recoder) callService(t *Transport) (*http.Response, error) {
 	}
 
 	resp, err := t.RoundTripper.RoundTrip(r.req)
-
-	if err == nil && foundIncludeList(r) {
+	if err == nil {
 		addToCache(r, resp)
 	}
-
 	return resp, err
 }
 
 func addToCache(row Recoder, resp *http.Response) {
-	oBody, err := httputil.DumpResponse(resp, true)
-	fatal(err)
-	row.resp = resp
-	row.Response.Status = resp.Status
-	row.Response.StatusCode = resp.StatusCode
-	row.Response.Body = oBody
-	row.Response.BodyText = byteToStr(oBody)
-	row.Name = generateKey(row.Request)
+	if foundIncludeList(r) && isRecordMode() {
+		oBody, err := httputil.DumpResponse(resp, true)
+		fatal(err)
+		row.resp = resp
+		row.Response.Status = resp.Status
+		row.Response.StatusCode = resp.StatusCode
+		row.Response.Body = oBody
+		row.Response.BodyText = byteToStr(oBody)
+		row.Name = generateKey(row.Request)
 
-	data.List[row.Name] = row
-	fmt.Printf("CACHE_ADDED: current cache %v record, cache_key=%v\n", len(data.List), row.Name)
+		data.List[row.Name] = row
+		fmt.Printf("CACHE_ADDED: current cache %v record, cache_key=%v\n", len(data.List), row.Name)
+	}
 }

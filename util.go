@@ -104,3 +104,11 @@ func foundIncludeList(r Recoder) bool {
 	_, found := arg.IncludeList[endpoint]
 	return found
 }
+
+func isRecordMode() bool {
+	return arg.Mode == "Record"
+}
+
+func isReplayMode() bool {
+	return arg.Mode == "Replay"
+}

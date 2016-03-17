@@ -32,7 +32,6 @@ func parseArg() {
 	println(arg.Mode, "Mode")
 	println("===========================================")
 	fmt.Printf("config %# v \n\n", pretty.Formatter(arg))
-
 }
 
 func ReadConfig() {
