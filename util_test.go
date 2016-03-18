@@ -118,10 +118,10 @@ func TestFoundInIncludeList(t *testing.T) {
 		expected bool
 		search   Recoder
 	}{
-		{"match", true, Recoder{Request: Inbound{Host: "www.google.com", Path: "/starwars"}}},
-		{"match", true, Recoder{Request: Inbound{Host: "dtac.co.th", Path: "/prepaid"}}},
-		{"not match", false, Recoder{Request: Inbound{Host: "bing.com", Path: "/reward"}}},
-		{"not match", false, Recoder{Request: Inbound{Host: "yahoo.com", Path: "/mail"}}},
+		{"match1", true, Recoder{Request: Inbound{Host: "www.google.com", Path: "/starwars"}}},
+		{"match2", true, Recoder{Request: Inbound{Host: "dtac.co.th", Path: "/prepaid"}}},
+		{"not match1", false, Recoder{Request: Inbound{Host: "bing.com", Path: "/reward"}}},
+		{"not match2", false, Recoder{Request: Inbound{Host: "yahoo.com", Path: "/mail"}}},
 	}
 
 	original := arg.IncludeList
@@ -132,4 +132,43 @@ func TestFoundInIncludeList(t *testing.T) {
 		}
 	}
 	arg.IncludeList = original
+}
+
+func TestWildcardIncludeList(t *testing.T) {
+	condition := make(map[string]string)
+	condition["www.google.com/star*"] = "A"
+	condition["yahoo.com/star"] = "B"
+	var testcases = []struct {
+		name     string
+		expected bool
+		search   string
+	}{
+		{"match1", true, "www.google.com/starwars"},
+		{"match2", true, "www.google.com/star"},
+		{"not match1", false, "google.com/star"},
+		{"not match2", false, "th.yahoo.com/startrek"},
+	}
+
+	original := arg.IncludeList
+	arg.IncludeList = condition
+	for _, testcase := range testcases {
+		if wildcardMatch(testcase.search) != testcase.expected {
+			t.Error("fail case ", testcase.name)
+		}
+	}
+	arg.IncludeList = original
+}
+
+func TestIsRegX(t *testing.T) {
+	if !hasAsteriskCharactor("google.com/star*") {
+		t.Error("expect has AsteriskCharactor")
+	}
+
+	if !isRegularExpression("google.com/star*") {
+		t.Error("expect equal RegularExpression")
+	}
+
+	if isRegularExpression("google.com/star") {
+		t.Error("expect not equal RegularExpression")
+	}
 }

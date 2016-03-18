@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -14,7 +15,6 @@ import (
 )
 
 func unproxyURL(req *http.Request) {
-	// fmt.Printf("req.RequestURI=%v\n", req.RequestURI)
 	strURL := req.RequestURI
 
 	if inHostList(strings.Join(arg.HttpsList, ","), req.Host) {
@@ -28,8 +28,7 @@ func unproxyURL(req *http.Request) {
 }
 
 func inHostList(hostList, hostname string) bool {
-	index := strings.Index(hostList, hostname)
-	return (index >= 0)
+	return searchString(hostList, hostname)
 }
 
 func changeHostToHttps(endpoint string) string {
@@ -99,16 +98,56 @@ func byteToStr(data []byte) string {
 	return fmt.Sprintf("%s", data)
 }
 
-func foundIncludeList(r Recoder) bool {
-	endpoint := r.Request.Host + r.Request.Path
-	_, found := arg.IncludeList[endpoint]
-	return found
-}
-
 func isRecordMode() bool {
 	return arg.Mode == "Record"
 }
 
 func isReplayMode() bool {
 	return arg.Mode == "Replay"
+}
+
+func foundIncludeList(r Recoder) bool {
+	endpoint := r.Request.Host + r.Request.Path
+	return exactMatch(endpoint) || wildcardMatch(endpoint)
+}
+
+func exactMatch(endpoint string) bool {
+	_, foundExact := arg.IncludeList[endpoint]
+	return foundExact
+}
+
+func wildcardMatch(endpoint string) bool {
+	for key, _ := range arg.IncludeList {
+		if isRegularExpression(key) {
+			match, err := regexp.MatchString(key, endpoint)
+			fatal(err)
+
+			if match {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isRegularExpression(expr string) bool {
+	if !hasAsteriskCharactor(expr) {
+		return false
+	}
+
+	_, err := regexp.Compile(expr)
+	if err == nil {
+		return true
+	}
+	fatal(err)
+	return false
+}
+
+func hasAsteriskCharactor(expr string) bool {
+	return searchString(expr, "*")
+}
+
+func searchString(str, search string) bool {
+	index := strings.Index(str, search)
+	return (index >= 0)
 }
